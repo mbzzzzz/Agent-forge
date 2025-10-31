@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AgentForge Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              display: ['Plus Jakarta Sans', 'sans-serif'],
+            },
+            colors: {
+              'primary': 'var(--primary)',
+              'primary-container': 'var(--primary-container)',
+              'on-primary': 'var(--on-primary)',
+              'on-primary-container': 'var(--on-primary-container)',
+              'secondary': 'var(--secondary)',
+              'on-secondary': 'var(--on-secondary)',
+              'surface': 'var(--surface)',
+              'on-surface': 'var(--on-surface)',
+              'surface-variant': 'var(--surface-variant)',
+              'on-surface-variant': 'var(--on-surface-variant)',
+              'outline': 'var(--outline)',
+              'glass': 'var(--glass-bg)',
+            },
+            borderRadius: {
+              'xs': '8px',
+              'sm': '12px',
+              'md': '16px',
+              'lg': '24px',
+              'xl': '32px',
+            },
+            boxShadow: {
+              'elev-1': '0 2px 10px rgba(0,0,0,0.25)',
+              'elev-2': '0 8px 24px rgba(0,0,0,0.25)',
+              'glow': '0 0 0 3px var(--primary-container)',
+            },
+            animation: {
+              'gradient-bg': 'gradient-bg 15s ease infinite',
+            },
+            keyframes: {
+              'gradient-bg': {
+                '0%, 100%': { backgroundPosition: '0% 50%' },
+                '50%': { backgroundPosition: '100% 50%' },
+              }
+            }
+          },
+        },
+      }
+    </script>
+    
+    <style>
+      :root {
+        /* M3 Dark Theme from seed #7C5CFF */
+        --primary: #C3B6FF;
+        --on-primary: #32206F;
+        --primary-container: #493987;
+        --on-primary-container: #E3DFFF;
+        --secondary: #C8C3DC;
+        --on-secondary: #312E41;
+        --surface: #131318;
+        --on-surface: #E5E1E6;
+        --surface-variant: #48454F;
+        --on-surface-variant: #C9C4D0;
+        --outline: #928F99;
+        --background: #131318;
+        --on-background: #E5E1E6;
+
+        /* Glassmorphism */
+        --glass-bg: rgba(26, 26, 32, 0.45);
+        --glass-blur: 18px;
+        --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      body {
+        background: var(--background);
+        background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 62%, 0.12) 0px, transparent 50%), 
+                          radial-gradient(at 97% 21%, hsla(234, 98%, 62%, 0.15) 0px, transparent 50%), 
+                          radial-gradient(at 70% 94%, hsla(284, 98%, 62%, 0.1) 0px, transparent 50%);
+        color: var(--on-surface);
+      }
+      @media print {
+        body, html {
+          background-color: white;
+        }
+        body * {
+          visibility: hidden;
+        }
+        #brand-guide-to-print, #brand-guide-to-print * {
+          visibility: visible;
+        }
+        #brand-guide-to-print {
+          position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px;
+        }
+        @page { size: A4; margin: 20mm; }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^11.3.19",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.417.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-background text-on-surface font-sans">
+    <div id="root"></div>
+  </body>
+</html>
