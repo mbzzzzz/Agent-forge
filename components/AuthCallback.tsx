@@ -17,14 +17,9 @@ const AuthCallback: React.FC = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
         if (hashParams.has('access_token') || hashParams.has('error')) {
-          // Supabase should automatically process this, but let's wait a moment
-          // and then check for the session
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error('Error getting session:', error);
+          if (hashParams.has('error')) {
+            // OAuth error occurred
+            console.error('OAuth error:', hashParams.get('error_description') || hashParams.get('error'));
             setStatus('error');
             setTimeout(() => {
               window.location.href = '/';
@@ -32,16 +27,32 @@ const AuthCallback: React.FC = () => {
             return;
           }
 
-          if (session) {
-            // Success! Clean up the URL
-            window.history.replaceState({}, '', '/auth/callback');
-            setStatus('success');
-            // Redirect to home
-            setTimeout(() => {
+          // Wait for Supabase to automatically process the hash fragment
+          // The detectSessionInUrl option should handle this, but we need to wait
+          let sessionFound = false;
+          for (let i = 0; i < 10; i++) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (error) {
+              console.error('Error getting session:', error);
+              break;
+            }
+            
+            if (session?.user) {
+              sessionFound = true;
+              // Clean up the URL
+              window.history.replaceState({}, '', '/auth/callback');
+              setStatus('success');
+              // Give auth state change time to update
+              await new Promise(resolve => setTimeout(resolve, 300));
               window.location.href = '/';
-            }, 500);
-          } else {
-            // No session found
+              return;
+            }
+          }
+          
+          if (!sessionFound) {
+            console.error('Session not found after waiting');
             setStatus('error');
             setTimeout(() => {
               window.location.href = '/';
@@ -50,12 +61,14 @@ const AuthCallback: React.FC = () => {
         } else {
           // No hash params, check if we already have a session
           const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
+          if (session?.user) {
             setStatus('success');
             setTimeout(() => {
               window.location.href = '/';
             }, 500);
           } else {
+            // If no session and no hash, we might be here by mistake
+            console.log('No OAuth tokens and no session found');
             setStatus('error');
             setTimeout(() => {
               window.location.href = '/';

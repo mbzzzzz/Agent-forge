@@ -21,29 +21,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       if (session?.user) {
         const mapped: User = {
           uid: session.user.id,
           email: session.user.email ?? null,
-          displayName: session.user.user_metadata?.full_name ?? null,
-          photoURL: session.user.user_metadata?.avatar_url ?? null,
+          displayName: session.user.user_metadata?.full_name ?? session.user.user_metadata?.name ?? null,
+          photoURL: session.user.user_metadata?.avatar_url ?? session.user.user_metadata?.picture ?? null,
         };
         setUser(mapped);
+        setLoading(false);
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data }) => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Error getting initial session:', error);
+        setLoading(false);
+        return;
+      }
+      
       const session = data.session;
+      console.log('Initial session:', session?.user?.email || 'No session');
       if (session?.user) {
         const mapped: User = {
           uid: session.user.id,
           email: session.user.email ?? null,
-          displayName: session.user.user_metadata?.full_name ?? null,
-          photoURL: session.user.user_metadata?.avatar_url ?? null,
+          displayName: session.user.user_metadata?.full_name ?? session.user.user_metadata?.name ?? null,
+          photoURL: session.user.user_metadata?.avatar_url ?? session.user.user_metadata?.picture ?? null,
         };
         setUser(mapped);
       } else {
@@ -65,12 +76,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) {
         setError(error.message || 'Failed to sign in. Please check your credentials.');
         console.error('Login error', error);
+        setLoading(false);
+      } else if (data?.session?.user) {
+        // Session is returned, update user state immediately
+        const mapped: User = {
+          uid: data.session.user.id,
+          email: data.session.user.email ?? null,
+          displayName: data.session.user.user_metadata?.full_name ?? data.session.user.user_metadata?.name ?? null,
+          photoURL: data.session.user.user_metadata?.avatar_url ?? data.session.user.user_metadata?.picture ?? null,
+        };
+        setUser(mapped);
+        setLoading(false);
+      } else {
+        // Wait a moment for session to be processed
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user) {
+          const mapped: User = {
+            uid: sessionData.session.user.id,
+            email: sessionData.session.user.email ?? null,
+            displayName: sessionData.session.user.user_metadata?.full_name ?? sessionData.session.user.user_metadata?.name ?? null,
+            photoURL: sessionData.session.user.user_metadata?.avatar_url ?? sessionData.session.user.user_metadata?.picture ?? null,
+          };
+          setUser(mapped);
+        }
+        setLoading(false);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
       console.error('Login error', err);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const signup = async (email: string, pass: string) => {
@@ -92,14 +127,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) {
         setError(error.message || 'Failed to create account. Please try again.');
         console.error('Signup error', error);
+        setLoading(false);
+      } else if (data?.user && data?.session) {
+        // Signup successful and session created (email confirmation might be disabled)
+        const mapped: User = {
+          uid: data.user.id,
+          email: data.user.email ?? null,
+          displayName: data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? null,
+          photoURL: data.user.user_metadata?.avatar_url ?? data.user.user_metadata?.picture ?? null,
+        };
+        setUser(mapped);
+        setLoading(false);
       } else if (data?.user && !data.session) {
+        // User created but needs email confirmation
         setError('Check your email to confirm your account!');
+        setLoading(false);
+      } else {
+        // Wait a moment and check for session
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user) {
+          const mapped: User = {
+            uid: sessionData.session.user.id,
+            email: sessionData.session.user.email ?? null,
+            displayName: sessionData.session.user.user_metadata?.full_name ?? sessionData.session.user.user_metadata?.name ?? null,
+            photoURL: sessionData.session.user.user_metadata?.avatar_url ?? sessionData.session.user.user_metadata?.picture ?? null,
+          };
+          setUser(mapped);
+        }
+        setLoading(false);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
       console.error('Signup error', err);
+      setLoading(false);
     }
-    setLoading(false);
   };
   
   const loginWithGoogle = async () => {
