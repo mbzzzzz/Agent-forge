@@ -5,10 +5,12 @@ import { supabase } from './services/supabaseClient';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  error: string | null;
   login: (email: string, pass: string) => Promise<void>;
   signup: (email: string, pass: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -56,29 +59,70 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, pass: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) {
-      console.error('Login error', error);
+    setError(null);
+    try {
+      const { error, data } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) {
+        setError(error.message || 'Failed to sign in. Please check your credentials.');
+        console.error('Login error', error);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Login error', err);
     }
     setLoading(false);
   };
 
   const signup = async (email: string, pass: string) => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password: pass });
-    if (error) {
-      console.error('Signup error', error);
+    setError(null);
+    try {
+      if (pass.length < 6) {
+        setError('Password must be at least 6 characters long.');
+        setLoading(false);
+        return;
+      }
+      const { error, data } = await supabase.auth.signUp({ 
+        email, 
+        password: pass,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) {
+        setError(error.message || 'Failed to create account. Please try again.');
+        console.error('Signup error', error);
+      } else if (data?.user && !data.session) {
+        setError('Check your email to confirm your account!');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Signup error', err);
     }
     setLoading(false);
   };
   
   const loginWithGoogle = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-    if (error) {
-      console.error('OAuth error', error);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ 
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) {
+        setError(error.message || 'Failed to sign in with Google. Please try again.');
+        console.error('OAuth error', error);
+        setLoading(false);
+      }
+      // Note: OAuth redirects to Google, so loading will be handled by auth state change
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('OAuth error', err);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const logout = async () => {
@@ -90,7 +134,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(false);
   };
 
-  const value = { user, loading, login, signup, loginWithGoogle, logout };
+  const clearError = () => setError(null);
+
+  const value = { user, loading, error, login, signup, loginWithGoogle, logout, clearError };
 
   return (
     <AuthContext.Provider value={value}>

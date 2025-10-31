@@ -16,9 +16,14 @@ const GoogleIcon = () => (
 );
 
 const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
-    const { login, signup, loading } = useAuth();
+    const { login, signup, loading, error, clearError } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    
+    // Clear error when switching between sign in/up
+    React.useEffect(() => {
+        clearError();
+    }, [isSignUp, clearError]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,15 +36,54 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+                <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-3 rounded-lg shadow-lg flex items-center gap-3 text-sm"
+                >
+                    <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
+                    <span className="flex-1">{error}</span>
+                    <button 
+                        type="button"
+                        onClick={clearError}
+                        className="text-red-300 hover:text-red-200 transition-colors"
+                        aria-label="Dismiss error"
+                    >
+                        ✕
+                    </button>
+                </motion.div>
+            )}
             <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/70" />
-                <Input type="email" placeholder="email@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" required />
+                <Input 
+                    type="email" 
+                    placeholder="email@example.com" 
+                    value={email} 
+                    onChange={e => {
+                        setEmail(e.target.value);
+                        if (error) clearError();
+                    }} 
+                    className="pl-10" 
+                    required 
+                />
             </div>
             <div className="relative">
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/70" />
-                <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" required />
+                <Input 
+                    type="password" 
+                    placeholder="Password (min 6 characters)" 
+                    value={password} 
+                    onChange={e => {
+                        setPassword(e.target.value);
+                        if (error) clearError();
+                    }} 
+                    className="pl-10" 
+                    required 
+                    minLength={6}
+                />
             </div>
-            <Button type="submit" isLoading={loading} className="w-full">
+            <Button type="submit" isLoading={loading} className="w-full" disabled={loading}>
                 {isSignUp ? <><UserPlus className="w-5 h-5"/>Sign Up</> : <><LogIn className="w-5 h-5"/>Sign In</>}
             </Button>
         </form>
