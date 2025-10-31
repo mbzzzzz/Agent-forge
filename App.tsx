@@ -8,6 +8,7 @@ import PosterStudio from './components/PosterStudio';
 import SocialMediaStudio from './components/SocialMediaStudio';
 import VideoStudio from './components/VideoStudio';
 import AuthScreen from './components/Auth';
+import AuthCallback from './components/AuthCallback';
 import { useAuth } from './AuthContext';
 import { User, LogOut, Settings, ChevronDown, Bot } from 'lucide-react';
 import { ShaderAnimation } from './components/ui/shader-animation';
@@ -230,6 +231,29 @@ const Workspace: React.FC = () => {
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  // Listen for route changes
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    // Listen to popstate for browser back/forward
+    window.addEventListener('popstate', handleLocationChange);
+    
+    // Also check on initial load and when hash changes (for OAuth callbacks)
+    handleLocationChange();
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+    };
+  }, []);
+
+  // Handle OAuth callback route
+  if (currentPath === '/auth/callback') {
+    return <AuthCallback />;
+  }
 
   if (loading) {
     return (
