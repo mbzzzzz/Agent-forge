@@ -71,14 +71,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, pass: string) => {
     setLoading(true);
     setError(null);
+    console.log('🔐 Attempting login for:', email);
     try {
       const { error, data } = await supabase.auth.signInWithPassword({ email, password: pass });
+      console.log('Login response:', { error: error?.message, hasSession: !!data?.session, hasUser: !!data?.session?.user });
+      
       if (error) {
-        setError(error.message || 'Failed to sign in. Please check your credentials.');
-        console.error('Login error', error);
+        const errorMessage = error.message || 'Failed to sign in. Please check your credentials.';
+        setError(errorMessage);
+        console.error('❌ Login error:', error);
         setLoading(false);
-      } else if (data?.session?.user) {
+        return;
+      }
+      
+      if (data?.session?.user) {
         // Session is returned, update user state immediately
+        console.log('✅ Login successful, user:', data.session.user.email);
         const mapped: User = {
           uid: data.session.user.id,
           email: data.session.user.email ?? null,
@@ -89,8 +97,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
       } else {
         // Wait a moment for session to be processed
-        const { data: sessionData } = await supabase.auth.getSession();
+        console.log('⏳ No session in response, checking stored session...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error('❌ Error getting session:', sessionError);
+          setError('Failed to retrieve session. Please try again.');
+          setLoading(false);
+          return;
+        }
+        
         if (sessionData.session?.user) {
+          console.log('✅ Session found after wait, user:', sessionData.session.user.email);
           const mapped: User = {
             uid: sessionData.session.user.id,
             email: sessionData.session.user.email ?? null,
@@ -98,12 +116,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             photoURL: sessionData.session.user.user_metadata?.avatar_url ?? sessionData.session.user.user_metadata?.picture ?? null,
           };
           setUser(mapped);
+        } else {
+          console.error('❌ No session found after login attempt');
+          setError('Login successful but session not found. Please try again.');
         }
         setLoading(false);
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-      console.error('Login error', err);
+    } catch (err: any) {
+      const errorMessage = err?.message || 'An unexpected error occurred. Please try again.';
+      setError(errorMessage);
+      console.error('❌ Login exception:', err);
       setLoading(false);
     }
   };
@@ -111,12 +133,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signup = async (email: string, pass: string) => {
     setLoading(true);
     setError(null);
+    console.log('📝 Attempting signup for:', email);
+    
     try {
       if (pass.length < 6) {
         setError('Password must be at least 6 characters long.');
         setLoading(false);
         return;
       }
+      
       const { error, data } = await supabase.auth.signUp({ 
         email, 
         password: pass,
@@ -124,12 +149,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
+      
+      console.log('Signup response:', { 
+        error: error?.message, 
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session,
+        needsEmailConfirmation: !!data?.user && !data?.session
+      });
+      
       if (error) {
-        setError(error.message || 'Failed to create account. Please try again.');
-        console.error('Signup error', error);
+        const errorMessage = error.message || 'Failed to create account. Please try again.';
+        setError(errorMessage);
+        console.error('❌ Signup error:', error);
         setLoading(false);
-      } else if (data?.user && data?.session) {
+        return;
+      }
+      
+      if (data?.user && data?.session) {
         // Signup successful and session created (email confirmation might be disabled)
+        console.log('✅ Signup successful with session, user:', data.user.email);
         const mapped: User = {
           uid: data.user.id,
           email: data.user.email ?? null,
@@ -140,13 +178,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
       } else if (data?.user && !data.session) {
         // User created but needs email confirmation
+        console.log('📧 User created, email confirmation required');
         setError('Check your email to confirm your account!');
         setLoading(false);
       } else {
         // Wait a moment and check for session
+        console.log('⏳ No user/session in response, checking stored session...');
         await new Promise(resolve => setTimeout(resolve, 500));
-        const { data: sessionData } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('❌ Error getting session:', sessionError);
+          setError('Account created but session error. Please try logging in.');
+          setLoading(false);
+          return;
+        }
+        
         if (sessionData.session?.user) {
+          console.log('✅ Session found after wait, user:', sessionData.session.user.email);
           const mapped: User = {
             uid: sessionData.session.user.id,
             email: sessionData.session.user.email ?? null,
@@ -154,12 +203,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             photoURL: sessionData.session.user.user_metadata?.avatar_url ?? sessionData.session.user.user_metadata?.picture ?? null,
           };
           setUser(mapped);
+        } else {
+          console.log('ℹ️ No session found, user may need to confirm email');
+          setError('Account created! Please check your email to confirm your account.');
         }
         setLoading(false);
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-      console.error('Signup error', err);
+    } catch (err: any) {
+      const errorMessage = err?.message || 'An unexpected error occurred. Please try again.';
+      setError(errorMessage);
+      console.error('❌ Signup exception:', err);
       setLoading(false);
     }
   };
@@ -167,22 +220,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const loginWithGoogle = async () => {
     setLoading(true);
     setError(null);
+    console.log('🔐 Attempting Google OAuth login');
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ 
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      console.log('OAuth redirect URL:', redirectUrl);
+      
+      const { error, data } = await supabase.auth.signInWithOAuth({ 
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: redirectUrl
         }
       });
+      
       if (error) {
-        setError(error.message || 'Failed to sign in with Google. Please try again.');
-        console.error('OAuth error', error);
+        const errorMessage = error.message || 'Failed to sign in with Google. Please try again.';
+        setError(errorMessage);
+        console.error('❌ OAuth error:', error);
         setLoading(false);
+      } else {
+        console.log('✅ OAuth redirect initiated, redirecting to Google...');
+        // Note: OAuth redirects to Google, so loading will be handled by auth state change
+        // Don't set loading to false here as the redirect will happen
       }
-      // Note: OAuth redirects to Google, so loading will be handled by auth state change
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-      console.error('OAuth error', err);
+    } catch (err: any) {
+      const errorMessage = err?.message || 'An unexpected error occurred. Please try again.';
+      setError(errorMessage);
+      console.error('❌ OAuth exception:', err);
       setLoading(false);
     }
   };
