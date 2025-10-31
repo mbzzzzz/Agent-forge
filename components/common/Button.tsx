@@ -9,12 +9,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const Button: React.FC<ButtonProps> = ({ isLoading = false, variant = 'primary', children, className = '', ...props }) => {
-  const baseClasses = "flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background";
+  const baseClasses = "flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background shadow-lg hover:shadow-xl";
   const variantClasses = {
-    primary: 'bg-primary text-on-primary hover:bg-primary/90 focus:ring-primary',
-    secondary: 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80 focus:ring-secondary',
+    primary: 'bg-primary text-on-primary hover:bg-primary/90 focus:ring-primary hover:scale-[1.02] active:scale-[0.98]',
+    secondary: 'bg-surface-variant/80 backdrop-blur-sm text-on-surface-variant border border-outline/30 hover:bg-surface-variant focus:ring-secondary hover:scale-[1.02] active:scale-[0.98]',
   };
-  const disabledClasses = "disabled:bg-surface-variant/50 disabled:cursor-not-allowed disabled:text-on-surface-variant/50";
+  const disabledClasses = "disabled:bg-surface-variant/50 disabled:cursor-not-allowed disabled:text-on-surface-variant/50 disabled:shadow-none disabled:hover:scale-100";
 
   return (
     <motion.button

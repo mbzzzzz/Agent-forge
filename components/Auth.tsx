@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import Button from './common/Button';
 import Input from './common/Input';
-import { Mail, KeyRound, LogIn, UserPlus } from 'lucide-react';
+import { Mail, KeyRound, LogIn, UserPlus, Bot } from 'lucide-react';
+import { ShaderAnimation } from './ui/shader-animation';
 
 const GoogleIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 48 48">
@@ -51,50 +52,109 @@ const AuthScreen: React.FC = () => {
     const { loginWithGoogle, loading } = useAuth();
     
     return (
-        <div className="min-h-screen w-full flex items-center justify-center p-4">
-             <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', duration: 0.5 }}
-                className="w-full max-w-md bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) rounded-xl p-8 shadow-2xl"
-             >
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold font-display text-on-surface">Welcome to AgentForge</h1>
-                    <p className="text-on-surface-variant mt-2">{isSignUp ? 'Create an account to start building.' : 'Sign in to your workspace.'}</p>
-                </div>
-                
-                <div className="flex items-center bg-surface-variant/30 rounded-lg p-1 mb-6">
-                    <button onClick={() => setIsSignUp(false)} className={`w-1/2 py-2.5 rounded-md font-semibold transition-colors ${!isSignUp ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'}`}>
-                        Sign In
-                    </button>
-                    <button onClick={() => setIsSignUp(true)} className={`w-1/2 py-2.5 rounded-md font-semibold transition-colors ${isSignUp ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'}`}>
-                        Sign Up
-                    </button>
-                </div>
+        <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Animated Shader Background */}
+            <div className="absolute inset-0 z-0">
+                <ShaderAnimation intensity={0.6} speed={0.8} />
+            </div>
+            
+            {/* Gradient overlays */}
+            <div className="absolute inset-0 z-[1]">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background/90 to-secondary/10"></div>
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+            
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ type: 'spring', duration: 0.6, damping: 20 }}
+                className="w-full max-w-md relative z-10"
+            >
+                <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+                    {/* Gradient border effect */}
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 opacity-50 blur-xl -z-10"></div>
+                    
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -z-10"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full blur-2xl -z-10"></div>
+                    
+                    <div className="text-center mb-8 relative z-10">
+                        <motion.div 
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="inline-block mb-4"
+                        >
+                            <div className="bg-primary/20 p-3 rounded-xl inline-block">
+                                <Bot className="w-8 h-8 text-primary" />
+                            </div>
+                        </motion.div>
+                        <h1 className="text-4xl font-bold font-display text-on-surface mb-2 bg-gradient-to-r from-on-surface to-on-surface-variant bg-clip-text">
+                            Welcome to AgentForge
+                        </h1>
+                        <p className="text-on-surface-variant mt-2 text-sm">{isSignUp ? 'Create an account to start building.' : 'Sign in to your workspace.'}</p>
+                    </div>
+                    
+                    <div className="flex items-center bg-surface-variant/20 backdrop-blur-sm rounded-xl p-1 mb-6 border border-outline/20 relative z-10">
+                        <motion.div
+                            className="absolute top-1 bottom-1 rounded-lg bg-primary-container transition-all duration-300"
+                            style={{
+                                left: isSignUp ? '50%' : '0.25rem',
+                                right: isSignUp ? '0.25rem' : '50%',
+                            }}
+                        />
+                        <button 
+                            onClick={() => setIsSignUp(false)} 
+                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-semibold transition-colors duration-200 ${
+                                !isSignUp 
+                                    ? 'text-on-primary-container' 
+                                    : 'text-on-surface-variant hover:text-on-surface'
+                            }`}
+                        >
+                            Sign In
+                        </button>
+                        <button 
+                            onClick={() => setIsSignUp(true)} 
+                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-semibold transition-colors duration-200 ${
+                                isSignUp 
+                                    ? 'text-on-primary-container' 
+                                    : 'text-on-surface-variant hover:text-on-surface'
+                            }`}
+                        >
+                            Sign Up
+                        </button>
+                    </div>
 
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={isSignUp ? 'signup' : 'login'}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={isSignUp ? 'signup' : 'login'}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="relative z-10"
+                        >
+                            <AuthForm isSignUp={isSignUp} />
+                        </motion.div>
+                    </AnimatePresence>
+
+                    <div className="flex items-center my-6 relative z-10">
+                        <hr className="flex-grow border-outline/30"/>
+                        <span className="mx-4 text-xs text-on-surface-variant font-medium">OR</span>
+                        <hr className="flex-grow border-outline/30"/>
+                    </div>
+
+                    <Button 
+                        onClick={loginWithGoogle} 
+                        isLoading={loading} 
+                        variant="secondary" 
+                        className="w-full relative z-10 hover:scale-[1.02] transition-transform"
                     >
-                        <AuthForm isSignUp={isSignUp} />
-                    </motion.div>
-                </AnimatePresence>
-
-                <div className="flex items-center my-6">
-                    <hr className="flex-grow border-outline/30"/>
-                    <span className="mx-4 text-xs text-on-surface-variant">OR</span>
-                    <hr className="flex-grow border-outline/30"/>
+                        <GoogleIcon />
+                        Continue with Google
+                    </Button>
                 </div>
-
-                <Button onClick={loginWithGoogle} isLoading={loading} variant="secondary" className="w-full">
-                    <GoogleIcon />
-                    Continue with Google
-                </Button>
-
             </motion.div>
         </div>
     );

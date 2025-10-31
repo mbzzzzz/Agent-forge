@@ -82,10 +82,58 @@
       }
       body {
         background: var(--background);
-        background-image: radial-gradient(at 27% 37%, hsla(215, 98%, 62%, 0.12) 0px, transparent 50%), 
-                          radial-gradient(at 97% 21%, hsla(234, 98%, 62%, 0.15) 0px, transparent 50%), 
-                          radial-gradient(at 70% 94%, hsla(284, 98%, 62%, 0.1) 0px, transparent 50%);
+        background-image: 
+          radial-gradient(circle at 20% 30%, hsla(260, 98%, 62%, 0.15) 0px, transparent 40%),
+          radial-gradient(circle at 80% 20%, hsla(280, 98%, 62%, 0.12) 0px, transparent 40%),
+          radial-gradient(circle at 50% 70%, hsla(240, 98%, 62%, 0.1) 0px, transparent 50%),
+          radial-gradient(circle at 10% 80%, hsla(300, 98%, 62%, 0.08) 0px, transparent 40%);
+        background-attachment: fixed;
+        background-size: 100% 100%;
         color: var(--on-surface);
+        position: relative;
+      }
+      
+      /* Animated background particles effect */
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+          radial-gradient(circle at 25% 25%, rgba(195, 182, 255, 0.1) 0px, transparent 50%),
+          radial-gradient(circle at 75% 75%, rgba(200, 195, 220, 0.1) 0px, transparent 50%);
+        animation: backgroundPulse 20s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 0;
+      }
+      
+      @keyframes backgroundPulse {
+        0%, 100% {
+          opacity: 0.5;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.05);
+        }
+      }
+      
+      /* Subtle grid pattern overlay */
+      body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+          linear-gradient(rgba(195, 182, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(195, 182, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        pointer-events: none;
+        z-index: 0;
       }
       @media print {
         body, html {

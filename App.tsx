@@ -10,6 +10,7 @@ import VideoStudio from './components/VideoStudio';
 import AuthScreen from './components/Auth';
 import { useAuth } from './AuthContext';
 import { User, LogOut, Settings, ChevronDown, Bot } from 'lucide-react';
+import { ShaderAnimation } from './components/ui/shader-animation';
 
 
 interface AppContextType {
@@ -30,28 +31,37 @@ const Sidebar: React.FC<{
   setActiveModule: (id: ModuleId) => void;
 }> = ({ activeModule, setActiveModule }) => {
   return (
-    <aside className="w-80 bg-glass backdrop-blur-[var(--glass-blur)] border-r border-white/10 p-4 flex flex-col z-10 shrink-0">
-      <div className="flex items-center gap-3 mb-10 px-4 pt-4">
-        <div className="bg-primary p-2.5 rounded-md">
+    <aside className="w-80 bg-glass backdrop-blur-[var(--glass-blur)] border-r border-white/10 p-6 flex flex-col z-10 shrink-0 shadow-2xl relative">
+      {/* Gradient accent */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+      
+      <div className="flex items-center gap-3 mb-10 px-2 pt-2">
+        <motion.div 
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          className="bg-gradient-to-br from-primary to-secondary p-3 rounded-xl shadow-lg"
+        >
           <Bot className="w-6 h-6 text-on-primary"/>
+        </motion.div>
+        <div>
+          <h1 className="text-xl font-bold font-display text-on-surface">AgentForge</h1>
+          <p className="text-xs text-on-surface-variant/70">Creative Studio</p>
         </div>
-        <h1 className="text-xl font-bold font-display text-on-surface">AgentForge</h1>
       </div>
       <nav className="flex flex-col gap-2">
         {CREATIVE_MODULES.map((module) => (
           <button
             key={module.id}
             onClick={() => setActiveModule(module.id)}
-            className={`relative flex items-center gap-4 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
+            className={`relative flex items-center gap-4 px-4 py-3 rounded-xl text-left transition-all duration-200 group ${
               activeModule === module.id
                 ? 'text-on-primary-container'
-                : 'text-on-surface-variant hover:bg-white/5'
+                : 'text-on-surface-variant hover:bg-white/5 hover:text-on-surface'
             }`}
           >
             {activeModule === module.id && (
               <motion.div
                 layoutId="active-module-indicator"
-                className="absolute inset-0 bg-primary-container rounded-lg z-0"
+                className="absolute inset-0 bg-primary-container rounded-xl z-0 shadow-lg"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -59,14 +69,15 @@ const Sidebar: React.FC<{
               />
             )}
             <div className="relative z-10 flex items-center gap-4">
-               <module.icon className="w-5 h-5" />
+               <module.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${activeModule === module.id ? 'scale-110' : ''}`} />
                <span className="font-semibold">{module.name}</span>
             </div>
           </button>
         ))}
       </nav>
-      <div className="mt-auto text-center text-on-surface-variant/50 text-xs px-4 pb-4">
+      <div className="mt-auto text-center text-on-surface-variant/40 text-xs px-4 pb-4 border-t border-outline/20 pt-4">
         <p>Powered by Google AI</p>
+        <p className="mt-1">Built with Supabase</p>
       </div>
     </aside>
   );
@@ -91,13 +102,18 @@ const UserMenu: React.FC = () => {
 
   return (
     <div className="relative" ref={menuRef}>
-      <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-3 bg-glass p-2 rounded-full border border-transparent hover:border-outline transition-colors">
-        <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center font-bold text-on-primary-container">
+      <motion.button 
+        onClick={() => setIsOpen(!isOpen)} 
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="flex items-center gap-3 bg-glass backdrop-blur-sm p-2 rounded-xl border border-outline/30 hover:border-primary/50 transition-all shadow-lg hover:shadow-xl"
+      >
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-on-primary shadow-md">
           {user.email?.charAt(0).toUpperCase()}
         </div>
-        <span className="font-semibold text-sm text-on-surface hidden md:block">{user.email}</span>
-        <ChevronDown className={`w-4 h-4 text-on-surface-variant transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+        <span className="font-semibold text-sm text-on-surface hidden md:block max-w-[120px] truncate">{user.email}</span>
+        <ChevronDown className={`w-4 h-4 text-on-surface-variant transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </motion.button>
 
       <AnimatePresence>
         {isOpen && (
@@ -106,15 +122,18 @@ const UserMenu: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="absolute top-full right-0 mt-2 w-56 bg-surface-variant border border-outline rounded-md shadow-lg z-50 overflow-hidden"
+              className="absolute top-full right-0 mt-2 w-56 bg-glass backdrop-blur-[var(--glass-blur)] border border-outline/30 rounded-xl shadow-2xl z-50 overflow-hidden"
            >
               <div className="p-2">
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-on-surface-variant hover:bg-primary-container hover:text-on-primary-container rounded-md transition-colors">
-                  <Settings className="w-4 h-4" />
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-primary-container/50 hover:text-on-primary-container rounded-lg transition-all duration-200 group">
+                  <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
                   Settings
                 </button>
-                <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/20 rounded-md transition-colors">
-                  <LogOut className="w-4 h-4" />
+                <button 
+                  onClick={logout} 
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all duration-200 group"
+                >
+                  <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                   Logout
                 </button>
               </div>
@@ -127,11 +146,18 @@ const UserMenu: React.FC = () => {
 
 const Header: React.FC<{ module: CreativeModule }> = ({ module }) => {
   return (
-    <header className="p-6 flex justify-between items-center shrink-0">
-      <div>
-        <h2 className="text-3xl font-bold font-display text-on-surface">{module.name}</h2>
-        <p className="text-on-surface-variant mt-1">{module.description}</p>
-      </div>
+    <header className="p-6 flex justify-between items-center shrink-0 bg-glass/30 backdrop-blur-sm border-b border-outline/20">
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2 className="text-3xl font-bold font-display text-on-surface flex items-center gap-3">
+          <module.icon className="w-8 h-8 text-primary" />
+          {module.name}
+        </h2>
+        <p className="text-on-surface-variant mt-1 text-sm">{module.description}</p>
+      </motion.div>
       <UserMenu />
     </header>
   );
@@ -157,16 +183,27 @@ const Workspace: React.FC = () => {
   return (
     <AppContext.Provider value={{ setBrandAccentColor }}>
       <div className="h-screen w-full flex bg-background font-sans overflow-hidden relative">
+        {/* Animated Shader Background */}
+        <div className="absolute inset-0 z-0">
+          <ShaderAnimation intensity={0.5} speed={0.7} />
+        </div>
+        
+        {/* Dynamic background gradient based on brand color - layered over shader */}
         <div 
-          className="absolute inset-0 z-0 transition-all duration-1000"
+          className="absolute inset-0 z-[1] transition-all duration-1000 mix-blend-overlay"
           style={{
-            background: `radial-gradient(circle at 15% 25%, ${brandAccentColor}30 0%, transparent 40%)`
+            background: `radial-gradient(circle at 15% 25%, ${brandAccentColor}25 0%, transparent 50%),
+                        radial-gradient(circle at 85% 75%, ${brandAccentColor}15 0%, transparent 40%)`
           }}
         />
+        
+        {/* Additional subtle overlay for depth */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-br from-background/70 via-background/50 to-background/70 pointer-events-none"></div>
+        
         <Sidebar activeModule={activeModuleId} setActiveModule={setActiveModuleId} />
-        <main className="flex-1 flex flex-col z-10 min-w-0">
+        <main className="flex-1 flex flex-col z-10 min-w-0 relative">
           <Header module={activeModule} />
-          <div className="flex-1 overflow-y-auto px-8 pb-8">
+          <div className="flex-1 overflow-y-auto px-8 pb-8 relative z-10">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeModuleId}

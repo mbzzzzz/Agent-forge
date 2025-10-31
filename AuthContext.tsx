@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from './types';
+import { supabase } from './services/supabaseClient';
 
 interface AuthContextType {
   user: User | null;
@@ -12,60 +13,80 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user for demonstration purposes
-const MOCK_USER: User = {
-  uid: '12345',
-  email: 'creator@agentforge.ai',
-  displayName: 'Alex Chroma',
-  photoURL: null,
-};
-
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate checking for an existing session
-    const session = sessionStorage.getItem('user-session');
-    if (session) {
-      setUser(JSON.parse(session));
-    }
-    setLoading(false);
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const mapped: User = {
+          uid: session.user.id,
+          email: session.user.email ?? null,
+          displayName: session.user.user_metadata?.full_name ?? null,
+          photoURL: session.user.user_metadata?.avatar_url ?? null,
+        };
+        setUser(mapped);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    supabase.auth.getSession().then(({ data }) => {
+      const session = data.session;
+      if (session?.user) {
+        const mapped: User = {
+          uid: session.user.id,
+          email: session.user.email ?? null,
+          displayName: session.user.user_metadata?.full_name ?? null,
+          photoURL: session.user.user_metadata?.avatar_url ?? null,
+        };
+        setUser(mapped);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, pass: string) => {
-    console.log(`Mock login with ${email}`);
     setLoading(true);
-    await new Promise(res => setTimeout(res, 1000));
-    setUser(MOCK_USER);
-    sessionStorage.setItem('user-session', JSON.stringify(MOCK_USER));
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) {
+      console.error('Login error', error);
+    }
     setLoading(false);
   };
 
   const signup = async (email: string, pass: string) => {
-    console.log(`Mock signup with ${email}`);
     setLoading(true);
-    await new Promise(res => setTimeout(res, 1000));
-    setUser(MOCK_USER);
-     sessionStorage.setItem('user-session', JSON.stringify(MOCK_USER));
+    const { error } = await supabase.auth.signUp({ email, password: pass });
+    if (error) {
+      console.error('Signup error', error);
+    }
     setLoading(false);
   };
   
   const loginWithGoogle = async () => {
-    console.log('Mock login with Google');
     setLoading(true);
-    await new Promise(res => setTimeout(res, 1000));
-    setUser(MOCK_USER);
-    sessionStorage.setItem('user-session', JSON.stringify(MOCK_USER));
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    if (error) {
+      console.error('OAuth error', error);
+    }
     setLoading(false);
   };
 
   const logout = async () => {
-    console.log('Mock logout');
     setLoading(true);
-    await new Promise(res => setTimeout(res, 500));
-    setUser(null);
-    sessionStorage.removeItem('user-session');
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Logout error', error);
+    }
     setLoading(false);
   };
 

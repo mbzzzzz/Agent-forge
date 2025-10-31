@@ -1,5 +1,5 @@
 {
-  "name": "agentforge-studio---complete-edition",
+  "name": "agentforge-studio",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,11 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-dom": "^19.2.0",
-    "react": "^19.2.0",
     "@google/genai": "^1.28.0",
+    "@supabase/supabase-js": "^2.47.10",
+    "@types/three": "^0.181.0",
     "framer-motion": "^11.3.19",
-    "lucide-react": "^0.417.0"
+    "lucide-react": "^0.417.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "three": "^0.181.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
