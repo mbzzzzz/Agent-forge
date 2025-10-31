@@ -93,7 +93,7 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
 
 const AuthScreen: React.FC = () => {
     const [isSignUp, setIsSignUp] = useState(false);
-    const { loginWithGoogle, loading } = useAuth();
+    const { loginWithGoogle, loading, error, clearError } = useAuth();
     
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
@@ -194,10 +194,29 @@ const AuthScreen: React.FC = () => {
                         isLoading={loading} 
                         variant="secondary" 
                         className="w-full relative z-10 hover:scale-[1.02] transition-transform"
+                        disabled={loading}
                     >
                         <GoogleIcon />
                         Continue with Google
                     </Button>
+                    {error && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mt-4 bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-3 rounded-lg shadow-lg flex items-center gap-3 text-sm"
+                        >
+                            <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
+                            <span className="flex-1">{error}</span>
+                            <button 
+                                type="button"
+                                onClick={clearError}
+                                className="text-red-300 hover:text-red-200 transition-colors"
+                                aria-label="Dismiss error"
+                            >
+                                ✕
+                            </button>
+                        </motion.div>
+                    )}
                 </div>
             </motion.div>
         </div>
