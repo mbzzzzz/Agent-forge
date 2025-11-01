@@ -2,8 +2,26 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { BrandIdentity, ColorPalette, Typography } from "../types";
 
-// Per guidelines, API key must be read from process.env directly.
-const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Get API key from window.aistudio if available, otherwise fall back to process.env
+const getApiKey = (): string => {
+  // Try to get API key from window.aistudio (for AI Studio environment)
+  if (typeof window !== 'undefined' && (window as any).aistudio?.getApiKey) {
+    try {
+      const apiKey = (window as any).aistudio.getApiKey();
+      if (apiKey) return apiKey;
+    } catch (e) {
+      console.warn('Could not get API key from window.aistudio:', e);
+    }
+  }
+  
+  // Fall back to process.env.API_KEY (set via vite.config.ts)
+  const envKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  if (envKey) return envKey;
+  
+  throw new Error('API key not found. Please select an API key or set GEMINI_API_KEY environment variable.');
+};
+
+const getAI = () => new GoogleGenAI({ apiKey: getApiKey() });
 
 // Brand Kit Studio
 export const generateBrandIdentity = async (businessInfo: string): Promise<BrandIdentity> => {
@@ -219,9 +237,12 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
     const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
     if (!downloadLink) throw new Error("Video URI not found in response.");
 
-    // FIX: Per guidelines, API key must be read from process.env directly for the fetch call.
-    // The response.body contains the MP4 bytes. You must append an API key when fetching from the download link.
-    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+    // Get API key for the fetch call (same method used for AI instance)
+    const apiKey = getApiKey();
+    const response = await fetch(`${downloadLink}&key=${apiKey}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch video: ${response.status} ${response.statusText}`);
+    }
     const blob = await response.blob();
     const videoUrl = URL.createObjectURL(blob);
     

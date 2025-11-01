@@ -40,13 +40,17 @@ const VideoStudio: React.FC = () => {
       const url = await generateVideo(prompt, setStatus);
       setGeneratedVideoUrl(url);
     } catch (e: any) {
-      if (e.message?.includes('Requested entity was not found')) {
+      console.error('Video generation error:', e);
+      if (e.message?.includes('Requested entity was not found') || e.message?.includes('API key')) {
         setError("API Key validation failed. Please select your API key again.");
         setIsKeySelected(false);
+      } else if (e.message?.includes('API key not found')) {
+        setError("API key is required. Please select an API key.");
+        setIsKeySelected(false);
       } else {
-        setError('Failed to generate video. Please try again.');
+        const errorMsg = e.message || 'Failed to generate video. Please try again.';
+        setError(errorMsg.length > 100 ? 'Failed to generate video. Please check your API key and try again.' : errorMsg);
       }
-      console.error(e);
     } finally {
       setIsLoading(false);
     }

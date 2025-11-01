@@ -14,6 +14,13 @@ if (typeof window !== 'undefined' && !(window as any).aistudio) {
       sessionStorage.setItem('aistudio_api_key_selected', 'true');
       window.dispatchEvent(new Event('aistudio_key_selected'));
       return Promise.resolve();
+    },
+    getApiKey: () => {
+      // Try to get API key from sessionStorage (for mock) or return null
+      const apiKey = sessionStorage.getItem('aistudio_api_key') || 
+                     (typeof process !== 'undefined' && process.env?.API_KEY) ||
+                     (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY);
+      return apiKey || null;
     }
   };
 }

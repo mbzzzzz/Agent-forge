@@ -26,9 +26,14 @@ const MockupStudio: React.FC = () => {
         try {
             const imageBytes = await generateMockup(mockupType, designDescription);
             setGeneratedImage(`data:image/png;base64,${imageBytes}`);
-        } catch (e) {
-            setError('Failed to generate mockup. Please try again.');
-            console.error(e);
+        } catch (e: any) {
+            console.error('Mockup generation error:', e);
+            const errorMsg = e.message || 'Failed to generate mockup. Please try again.';
+            if (errorMsg.includes('API key')) {
+                setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key.');
+            } else {
+                setError(errorMsg.length > 100 ? 'Failed to generate mockup. Please check your API key and try again.' : errorMsg);
+            }
         }
         setIsLoading(false);
     };
