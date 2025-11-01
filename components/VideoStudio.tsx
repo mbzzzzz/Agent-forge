@@ -80,7 +80,7 @@ const VideoStudio: React.FC = () => {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="e.g., A neon hologram of a cat driving at top speed"
-          className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-on-surface placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none mb-4 transition"
+          className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none mb-4 transition"
         />
         <Button onClick={handleGenerate} isLoading={isLoading} className="w-full">
           Generate Video

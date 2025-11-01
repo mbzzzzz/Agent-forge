@@ -81,7 +81,7 @@ const SocialMediaStudio: React.FC = () => {
                             value={theme}
                             onChange={(e) => setTheme(e.target.value)}
                             placeholder="e.g., Announcing a weekend sale for our new collection"
-                            className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-on-surface placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-24 resize-none transition"
+                            className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-24 resize-none transition"
                         />
                     </div>
                     <Button onClick={handleGenerate} isLoading={isLoading} className="w-full">
