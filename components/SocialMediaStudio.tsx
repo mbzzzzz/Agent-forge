@@ -30,13 +30,29 @@ const SocialMediaStudio: React.FC = () => {
         setError(null);
         setGeneratedPost(null);
         try {
+            console.log('Starting social post generation:', { platform, theme });
             const post = await generateSocialPost(platform, theme);
+            console.log('Social post generation successful');
+            if (!post || !post.image || !post.caption) {
+                throw new Error('Incomplete data returned from API');
+            }
             setGeneratedPost(post);
-        } catch (e) {
-            setError('Failed to generate social media post. Please try again.');
-            console.error(e);
+        } catch (e: any) {
+            console.error('Social post generation error:', e);
+            const errorMessage = e?.message || e?.toString() || 'Unknown error occurred';
+            console.error('Error details:', { message: errorMessage, error: e });
+            
+            if (errorMessage.includes('API key')) {
+                setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key.');
+            } else {
+                const errorMsg = errorMessage.length > 100 
+                    ? 'Failed to generate social media post. Please check your API key and try again.' 
+                    : errorMessage;
+                setError(errorMsg);
+            }
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     const handleCopy = () => {
