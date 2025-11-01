@@ -41,6 +41,7 @@ const BrandKitStudio: React.FC = () => {
   const [isGeneratingAll, setIsGeneratingAll] = useState<boolean>(false);
   const [isGeneratingAssets, setIsGeneratingAssets] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<string>('');
   const { setBrandAccentColor } = useAppContext();
   
   const [businessInfo, setBusinessInfo] = useState('An eco-friendly coffee shop targeting young professionals in urban areas');
@@ -73,34 +74,48 @@ const BrandKitStudio: React.FC = () => {
   }, [colorPalette, setBrandAccentColor]);
 
   const handleGenerateAll = async () => {
-    if (!businessInfo) {
-      setError("Please describe your business first.");
+    if (!businessInfo || businessInfo.trim().length < 10) {
+      setError("Please provide a detailed business description (at least 10 characters).");
       return;
     }
+    
     setIsGeneratingAll(true);
     setError(null);
+    setGenerationProgress('Initializing brand generation...');
     setBrandIdentity(null);
     setLogos([]);
     setColorPalette(null);
     setTypography(null);
     setBrandAssets([]);
 
+    const timeoutId = setTimeout(() => {
+      if (isGeneratingAll) {
+        setGenerationProgress('This is taking longer than expected. Please wait...');
+      }
+    }, 30000); // 30 second warning
+
     try {
+      console.log('Starting brand kit generation...');
+      setGenerationProgress('Analyzing your business and creating brand identity...');
       const identity = await generateBrandIdentity(businessInfo);
+      console.log('Brand identity generated:', identity);
       setBrandIdentity(identity);
       
+      setGenerationProgress('Generating color palette, typography, and logo...');
       const [palette, typo, imageBytes] = await Promise.all([
          generateColorPalette(identity.personality || businessInfo),
          generateTypography(identity.personality),
          generateLogo(identity.name, businessInfo, "Combination Mark")
       ]);
       
+      console.log('Core assets generated');
       setColorPalette(palette);
       setTypography(typo);
       const logoSrc = `data:image/png;base64,${imageBytes}`;
       setLogos([{ src: logoSrc, alt: `${identity.name} Logo - Combination Mark` }]);
       
       // Trigger asset generation
+      setGenerationProgress('Creating brand assets (favicon, profile picture)...');
       setIsGeneratingAssets(true);
       const logoBase64 = imageBytes;
       const [faviconBytes, profilePicBytes] = await Promise.all([
@@ -112,13 +127,26 @@ const BrandKitStudio: React.FC = () => {
         { name: 'Profile Picture', src: `data:image/png;base64,${profilePicBytes}`, dimensions: '400x400' },
       ]);
       setIsGeneratingAssets(false);
+      setGenerationProgress('');
+      console.log('Brand kit generation complete!');
 
-    } catch (e) {
-      setError("Failed to generate the full brand kit. Please try again.");
-      console.error(e);
+    } catch (e: any) {
+      console.error('Generation error:', e);
+      const errorMessage = e?.message || 'Unknown error occurred';
+      
+      if (errorMessage.includes('API key')) {
+        setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key in settings.');
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
+        setError('Request timed out. Please check your internet connection and try again.');
+      } else {
+        setError(`Failed to generate brand kit: ${errorMessage}. Please try again or check the console for details.`);
+      }
       setIsGeneratingAssets(false);
+      setGenerationProgress('');
+    } finally {
+      clearTimeout(timeoutId);
+      setIsGeneratingAll(false);
     }
-    setIsGeneratingAll(false);
   };
   
   const handlePrint = () => { window.print(); };
@@ -142,9 +170,9 @@ const BrandKitStudio: React.FC = () => {
         </motion.div>
       )}
 
-      <GlassCard title="Brand Foundation">
-        <p className="text-on-surface-variant mb-4">
-          Describe your business, and we'll generate a complete brand kit for you. Be as detailed as possible about your target audience, values, and style preferences.
+      <GlassCard title="Get Started">
+        <p className="text-on-surface-variant mb-6">
+          Describe your business in detail, and we'll generate a complete brand kit including logo, colors, typography, and brand guidelines.
         </p>
         <div className="space-y-2">
           <label htmlFor="business-info" className="block text-sm font-medium text-on-surface-variant">
@@ -164,28 +192,23 @@ const BrandKitStudio: React.FC = () => {
             Minimum 20 characters recommended for best results
           </p>
         </div>
-        <Button 
-          onClick={handleGenerateAll} 
-          isLoading={isGeneratingAll} 
-          className="mt-6 w-full"
-          disabled={!businessInfo.trim() || businessInfo.trim().length < 10}
-          aria-label={isGeneratingAll ? 'Generating brand kit' : 'Generate full brand kit'}
-        >
-          {isGeneratingAll ? (
-            <>
-              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Building Your Brand...
-            </>
-          ) : (
-            'Generate Full Brand Kit'
+        <div className="space-y-3">
+          <Button 
+            onClick={handleGenerateAll} 
+            isLoading={isGeneratingAll} 
+            className="mt-6 w-full"
+            disabled={!businessInfo.trim() || businessInfo.trim().length < 10}
+            aria-label={isGeneratingAll ? 'Generating brand kit' : 'Generate full brand kit'}
+          >
+            {isGeneratingAll ? 'Generating Brand Kit...' : 'Generate Full Brand Kit'}
+          </Button>
+          {isGeneratingAll && generationProgress && (
+            <p className="text-sm text-on-surface-variant/70 text-center animate-pulse">
+              {generationProgress}
+            </p>
           )}
-        </Button>
+        </div>
       </GlassCard>
-      
-      {isGeneratingAll && <Loader text="Building your brand... This may take a moment."/>}
 
       {brandIdentity && (
         <div className="space-y-6">

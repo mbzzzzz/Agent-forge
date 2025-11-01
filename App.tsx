@@ -203,8 +203,7 @@ const Workspace: React.FC = () => {
         
         <Sidebar activeModule={activeModuleId} setActiveModule={setActiveModuleId} />
         <main className="flex-1 flex flex-col z-10 min-w-0 relative">
-          <Header module={activeModule} />
-          <div className="flex-1 overflow-y-auto px-8 pb-8 relative z-10">
+          <div className="flex-1 overflow-y-auto px-8 pb-8 pt-6 relative z-10">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeModuleId}

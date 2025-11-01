@@ -25,6 +25,7 @@ const getAI = () => new GoogleGenAI({ apiKey: getApiKey() });
 
 // Brand Kit Studio
 export const generateBrandIdentity = async (businessInfo: string): Promise<BrandIdentity> => {
+  console.log('Generating brand identity for:', businessInfo);
   const ai = getAI();
   const prompt = `You are a Brand Strategist agent. Analyze the following business information to create a comprehensive brand identity.
   Business: "${businessInfo}"
@@ -32,64 +33,116 @@ export const generateBrandIdentity = async (businessInfo: string): Promise<Brand
   Generate a brand name, personality profile, voice and tone, brand values, mission statement, and positioning statement.
   Return the output as a JSON object with keys: "name", "personality", "voice", "values", "mission", "positioning".`;
 
-  const response = await ai.models.generateContent({
-    // FIX: Use recommended model for complex text tasks. 'gemini-1.5-pro' is deprecated.
-    model: 'gemini-2.5-pro',
-    contents: prompt,
-    config: {
-        responseMimeType: "application/json",
-    }
-  });
+  try {
+    const response = await ai.models.generateContent({
+      // FIX: Use recommended model for complex text tasks. 'gemini-2.5-pro' is deprecated, fallback to gemini-1.5-flash
+      model: 'gemini-2.5-pro',
+      contents: prompt,
+      config: {
+          responseMimeType: "application/json",
+      }
+    });
 
-  const text = response.text.trim();
-  return JSON.parse(text) as BrandIdentity;
+    const text = response.text.trim();
+    console.log('Brand identity response received');
+    return JSON.parse(text) as BrandIdentity;
+  } catch (error: any) {
+    console.error('Error generating brand identity:', error);
+    // Try fallback model
+    try {
+      console.log('Trying fallback model: gemini-1.5-flash');
+      const response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+        }
+      });
+      const text = response.text.trim();
+      return JSON.parse(text) as BrandIdentity;
+    } catch (fallbackError) {
+      console.error('Fallback model also failed:', fallbackError);
+      throw new Error(`Failed to generate brand identity: ${error?.message || 'Unknown error'}`);
+    }
+  }
 };
 
 export const generateLogo = async (brandName: string, industry: string, style: string): Promise<string> => {
+    console.log('Generating logo for:', brandName, industry, style);
     const ai = getAI();
     const prompt = `Professional logo design for ${brandName}, a ${industry} company. Style: ${style}. Clean, scalable vector-style design on a transparent background. No text unless it is part of a wordmark. High quality, commercial use.`;
 
-    const response = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt: prompt,
-        config: {
-            numberOfImages: 1,
-            outputMimeType: 'image/png',
-            aspectRatio: '1:1',
-        },
-    });
+    try {
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+                numberOfImages: 1,
+                outputMimeType: 'image/png',
+                aspectRatio: '1:1',
+            },
+        });
 
-    return response.generatedImages[0].image.imageBytes;
+        if (!response?.generatedImages?.[0]?.image?.imageBytes) {
+            throw new Error('Logo generation returned no image data');
+        }
+
+        console.log('Logo generated successfully');
+        return response.generatedImages[0].image.imageBytes;
+    } catch (error: any) {
+        console.error('Error generating logo:', error);
+        throw new Error(`Failed to generate logo: ${error?.message || 'Unknown error'}`);
+    }
 };
 
 export const generateColorPalette = async (brandInfo: string): Promise<ColorPalette> => {
+    console.log('Generating color palette for:', brandInfo);
     const ai = getAI();
     const prompt = `As a Brand Strategist, create a color palette for a brand described as: "${brandInfo}". 
     Provide 2 primary colors, 3 secondary, 2 accent, and 2 neutral colors.
     Return a JSON object with keys: "primary", "secondary", "accent", "neutral". Each key should be an array of HEX color codes.`;
     
-    const response = await ai.models.generateContent({
-        // FIX: Use recommended model for complex text tasks. 'gemini-1.5-pro' is deprecated.
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    primary: { type: Type.ARRAY, items: { type: Type.STRING }},
-                    secondary: { type: Type.ARRAY, items: { type: Type.STRING }},
-                    accent: { type: Type.ARRAY, items: { type: Type.STRING }},
-                    neutral: { type: Type.ARRAY, items: { type: Type.STRING }},
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        primary: { type: Type.ARRAY, items: { type: Type.STRING }},
+                        secondary: { type: Type.ARRAY, items: { type: Type.STRING }},
+                        accent: { type: Type.ARRAY, items: { type: Type.STRING }},
+                        neutral: { type: Type.ARRAY, items: { type: Type.STRING }},
+                    }
                 }
             }
-        }
-    });
+        });
 
-    return JSON.parse(response.text.trim()) as ColorPalette;
+        const parsed = JSON.parse(response.text.trim()) as ColorPalette;
+        console.log('Color palette generated');
+        return parsed;
+    } catch (error: any) {
+        console.error('Error generating color palette:', error);
+        // Try fallback
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-1.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                }
+            });
+            return JSON.parse(response.text.trim()) as ColorPalette;
+        } catch (fallbackError) {
+            throw new Error(`Failed to generate color palette: ${error?.message || 'Unknown error'}`);
+        }
+    }
 };
 
 export const generateTypography = async (brandPersonality: string): Promise<Typography> => {
+    console.log('Generating typography for:', brandPersonality);
     const ai = getAI();
     const prompt = `You are a Typography Specialist. Based on a brand's personality, described as "${brandPersonality}", recommend a font pairing from Google Fonts.
     Provide:
@@ -98,50 +151,68 @@ export const generateTypography = async (brandPersonality: string): Promise<Typo
     3. A short paragraph of "guidelines" for their usage (e.g., font weights, sizing ratios).
     Return ONLY a valid JSON object with the keys "headingFont", "bodyFont", and "guidelines".`;
     
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    headingFont: { type: Type.STRING },
-                    bodyFont: { type: Type.STRING },
-                    guidelines: { type: Type.STRING },
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        headingFont: { type: Type.STRING },
+                        bodyFont: { type: Type.STRING },
+                        guidelines: { type: Type.STRING },
+                    },
                 },
             },
-        },
-    });
+        });
 
-    return JSON.parse(response.text.trim()) as Typography;
+        const parsed = JSON.parse(response.text.trim()) as Typography;
+        console.log('Typography generated');
+        return parsed;
+    } catch (error: any) {
+        console.error('Error generating typography:', error);
+        throw new Error(`Failed to generate typography: ${error?.message || 'Unknown error'}`);
+    }
 };
 
 export const generateBrandAsset = async (logoImageBase64: string, assetType: 'Favicon' | 'Profile Picture'): Promise<string> => {
+    console.log('Generating brand asset:', assetType);
     const ai = getAI();
     const promptText = assetType === 'Favicon'
       ? 'Convert this logo into a perfectly centered 1:1 aspect ratio favicon. Ensure it is clear and legible at 32x32 pixels. The background must be transparent.'
       : 'Convert this logo into a perfectly centered 1:1 aspect ratio social media profile picture. The design should be bold and fill the frame, suitable for a circular crop. The background must be transparent.';
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: {
-            parts: [
-                { inlineData: { data: logoImageBase64, mimeType: 'image/png' } },
-                { text: promptText },
-            ],
-        },
-        config: {
-            responseModalities: [Modality.IMAGE],
-        },
-    });
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [
+                    { inlineData: { data: logoImageBase64, mimeType: 'image/png' } },
+                    { text: promptText },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
+        });
 
-    for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-            return part.inlineData.data;
+        if (!response?.candidates?.[0]?.content?.parts) {
+            throw new Error('No response parts from API');
         }
+
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+                console.log('Brand asset generated:', assetType);
+                return part.inlineData.data;
+            }
+        }
+        throw new Error(`Could not generate ${assetType} - no image data in response`);
+    } catch (error: any) {
+        console.error(`Error generating ${assetType}:`, error);
+        throw new Error(`Failed to generate ${assetType}: ${error?.message || 'Unknown error'}`);
     }
-    throw new Error(`Could not generate ${assetType}`);
 };
 
 // Mockup Studio
