@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import Button from './common/Button';
 import Input from './common/Input';
 import Select from './common/Select';
@@ -27,13 +28,29 @@ const PosterStudio: React.FC = () => {
         setError(null);
         setGeneratedImage(null);
         try {
+            console.log('Starting poster generation:', { posterType, theme });
             const imageBytes = await generatePoster(posterType, theme);
+            console.log('Poster generation successful, imageBytes length:', imageBytes?.length);
+            if (!imageBytes) {
+                throw new Error('No image data returned from API');
+            }
             setGeneratedImage(`data:image/jpeg;base64,${imageBytes}`);
-        } catch (e) {
-            setError('Failed to generate poster. Please try again.');
-            console.error(e);
+        } catch (e: any) {
+            console.error('Poster generation error:', e);
+            const errorMessage = e?.message || e?.toString() || 'Unknown error occurred';
+            console.error('Error details:', { message: errorMessage, error: e });
+            
+            if (errorMessage.includes('API key')) {
+                setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key.');
+            } else {
+                const errorMsg = errorMessage.length > 100 
+                    ? 'Failed to generate poster. Please check your API key and try again.' 
+                    : errorMessage;
+                setError(errorMsg);
+            }
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     return (
@@ -71,7 +88,7 @@ const PosterStudio: React.FC = () => {
             </div>
             <div className="lg:col-span-2 bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-lg flex items-center justify-center min-h-[70vh] aspect-[3/4] relative">
                 {isLoading && <Loader text="Designing your poster..." />}
-                {!isLoading && !generatedImage && (
+                {!isLoading && !generatedImage && !error && (
                     <div className="text-center text-on-surface-variant/70">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-24 h-24 mx-auto mb-4">
                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12M3.75 3h16.5v11.25c0 1.242-.99 2.25-2.218 2.25H6.982c-.524 0-1.028.16-1.455.43A3.75 3.75 0 003 20.25V3.75" />
@@ -93,7 +110,30 @@ const PosterStudio: React.FC = () => {
                         </div>
                     </div>
                 )}
-                 {error && <p className="text-red-400">{error}</p>}
+                {error && !isLoading && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="absolute inset-0 flex items-center justify-center z-50"
+                    >
+                        <div className="bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-6 rounded-xl shadow-2xl max-w-md mx-4">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                                <h3 className="text-lg font-bold">Generation Failed</h3>
+                            </div>
+                            <p className="text-sm mb-4">{error}</p>
+                            <Button 
+                                onClick={() => {
+                                    setError(null);
+                                    setGeneratedImage(null);
+                                }}
+                                className="w-full"
+                            >
+                                Try Again
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
             </div>
         </div>
     );
