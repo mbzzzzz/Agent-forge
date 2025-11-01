@@ -60,8 +60,15 @@ const MockupStudio: React.FC = () => {
                 <h3 className="text-xl font-bold font-display mb-6 text-on-surface bg-gradient-to-r from-on-surface to-on-surface-variant bg-clip-text">Configuration</h3>
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2">Mockup Type</label>
-                        <Select value={mockupType} onChange={e => setMockupType(e.target.value)}>
+                        <label htmlFor="mockup-type" className="block text-sm font-medium text-on-surface-variant mb-2">
+                            Mockup Type
+                        </label>
+                        <Select 
+                            id="mockup-type"
+                            value={mockupType} 
+                            onChange={e => setMockupType(e.target.value)}
+                            aria-label="Select mockup type"
+                        >
                             {Object.entries(MOCKUP_CATEGORIES).map(([category, types]) => (
                                 <optgroup label={category} key={category} className="bg-surface">
                                     {types.map(type => <option key={type} value={type}>{type}</option>)}
@@ -70,13 +77,22 @@ const MockupStudio: React.FC = () => {
                         </Select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2">Design Description</label>
+                        <label htmlFor="design-description" className="block text-sm font-medium text-on-surface-variant mb-2">
+                            Design Description <span className="text-red-400" aria-label="required">*</span>
+                        </label>
                         <textarea
+                            id="design-description"
                             value={designDescription}
                             onChange={(e) => setDesignDescription(e.target.value)}
-                            placeholder="e.g., A vibrant logo for a creative agency"
+                            placeholder="e.g., A vibrant logo for a creative agency with gradient colors and modern typography"
+                            aria-describedby="design-helper"
+                            aria-required="true"
                             className="w-full bg-surface-variant/30 backdrop-blur-sm border border-outline/40 rounded-lg px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 h-32 resize-none transition-all duration-200 hover:border-outline/60"
+                            rows={5}
                         />
+                        <p id="design-helper" className="text-xs text-on-surface-variant/70 mt-1">
+                            Describe your design in detail: colors, style, layout, and key visual elements
+                        </p>
                     </div>
                     <Button onClick={handleGenerate} isLoading={isLoading} className="w-full">
                         Generate Mockup
