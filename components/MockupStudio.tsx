@@ -87,7 +87,7 @@ const MockupStudio: React.FC = () => {
                             placeholder="e.g., A vibrant logo for a creative agency with gradient colors and modern typography"
                             aria-describedby="design-helper"
                             aria-required="true"
-                            className="w-full bg-surface-variant/30 backdrop-blur-sm border border-outline/40 rounded-lg px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 h-32 resize-none transition-all duration-200 hover:border-outline/60"
+                            className="w-full bg-surface-variant/30 backdrop-blur-sm border border-outline/40 rounded-lg px-4 py-3 text-white placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 h-32 resize-none transition-all duration-200 hover:border-outline/60"
                             rows={5}
                         />
                         <p id="design-helper" className="text-xs text-on-surface-variant/70 mt-1">

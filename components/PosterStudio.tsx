@@ -81,7 +81,7 @@ const PosterStudio: React.FC = () => {
                             onChange={(e) => setTheme(e.target.value)}
                             placeholder="e.g., A minimalist design for a tech conference with vibrant colors and modern typography"
                             aria-describedby="theme-helper"
-                            className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-on-surface placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none transition"
+                            className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none transition"
                             rows={4}
                         />
                         <p id="theme-helper" className="text-xs text-on-surface-variant/70 mt-1">

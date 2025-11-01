@@ -157,7 +157,7 @@ const BrandKitStudio: React.FC = () => {
             placeholder="e.g., An eco-friendly coffee shop targeting young professionals in urban areas who value sustainability and artisanal products..."
             aria-describedby="business-info-helper"
             aria-required="true"
-            className="w-full bg-surface-variant/30 backdrop-blur-sm border border-outline/40 rounded-lg px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 h-28 resize-none transition-all duration-200 hover:border-outline/60"
+            className="w-full bg-surface-variant/30 backdrop-blur-sm border border-outline/40 rounded-lg px-4 py-3 text-white placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 h-28 resize-none transition-all duration-200 hover:border-outline/60"
             rows={4}
           />
           <p id="business-info-helper" className="text-xs text-on-surface-variant/70">

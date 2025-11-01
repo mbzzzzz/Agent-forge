@@ -33,7 +33,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           }
           aria-invalid={hasError}
           aria-required={required}
-          className={`w-full bg-surface-variant/30 border rounded-lg px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 transition-all duration-200 backdrop-blur-sm ${
+          className={`w-full bg-surface-variant/30 border rounded-lg px-4 py-3 text-white placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 transition-all duration-200 backdrop-blur-sm ${
             hasError 
               ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50' 
               : 'border-outline/40 hover:border-outline/60'
