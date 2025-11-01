@@ -255,8 +255,11 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Handle OAuth callback route
-  if (currentPath === '/auth/callback') {
+  // Handle OAuth callback route - check both pathname and query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasAuthCode = urlParams.has('code') || window.location.hash.includes('access_token') || window.location.hash.includes('code');
+  
+  if (currentPath === '/auth/callback' || hasAuthCode) {
     return <AuthCallback />;
   }
 

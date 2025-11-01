@@ -11,16 +11,36 @@ const AuthCallback: React.FC = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Clean URL hash after Supabase processes it
-        if (window.location.hash) {
-          window.history.replaceState({}, '', '/auth/callback');
-        }
+        console.log('AuthCallback: Processing OAuth callback', {
+          hash: window.location.hash.substring(0, 50),
+          search: window.location.search.substring(0, 50),
+          pathname: window.location.pathname
+        });
 
-        // Wait 1 second for Supabase's detectSessionInUrl to process the hash
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Clean URL after Supabase processes it (both hash and query params)
+        const cleanUrl = () => {
+          const cleanPath = '/auth/callback';
+          if (window.location.hash || window.location.search) {
+            window.history.replaceState({}, '', cleanPath);
+          }
+        };
+
+        // Wait for Supabase's detectSessionInUrl to process the code/hash
+        // Supabase handles both hash fragments (#access_token) and query params (?code)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Clean URL now
+        cleanUrl();
 
         // Check for session
         const { data: { session }, error } = await supabase.auth.getSession();
+        
+        console.log('AuthCallback: Session check result', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
+          error: error?.message
+        });
         
         if (error) {
           console.error('Error getting session:', error);
@@ -32,11 +52,14 @@ const AuthCallback: React.FC = () => {
         }
 
         if (session?.user) {
+          console.log('✅ AuthCallback: Session found, redirecting to workspace');
           setStatus('success');
+          // Give a moment for auth state to propagate
           setTimeout(() => {
             window.location.href = '/';
           }, 500);
         } else {
+          console.warn('⚠️ AuthCallback: No session found after OAuth callback');
           setStatus('error');
           setTimeout(() => {
             window.location.href = '/';
