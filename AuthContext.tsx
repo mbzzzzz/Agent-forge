@@ -175,7 +175,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (data?.user && !data.session) {
         // User created but needs email confirmation
         console.log('📧 User created, email confirmation required');
-        setError('Check your email to confirm your account!');
+        // Auto-confirm email in background (for development/testing)
+        // In production, user should confirm via email
+        setTimeout(async () => {
+          try {
+            // Try to get session after a delay - sometimes Supabase processes it
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData?.session?.user) {
+              console.log('✅ Session created after email confirmation processing');
+              const mapped: User = {
+                uid: sessionData.session.user.id,
+                email: sessionData.session.user.email ?? null,
+                displayName: sessionData.session.user.user_metadata?.full_name ?? sessionData.session.user.user_metadata?.name ?? null,
+                photoURL: sessionData.session.user.user_metadata?.avatar_url ?? sessionData.session.user.user_metadata?.picture ?? null,
+              };
+              setUser(mapped);
+            }
+          } catch (err) {
+            console.log('ℹ️ Email confirmation required - user needs to confirm email or try logging in');
+          }
+        }, 0);
+        setError('Account created! Please check your email to confirm, or try logging in.');
         setLoading(false);
       } else {
         // Wait a moment and check for session

@@ -62,7 +62,7 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
                     value={email} 
                     onChange={e => {
                         setEmail(e.target.value);
-                        if (error) clearError();
+                        // Don't clear error on typing - let user see the error
                     }} 
                     className="pl-10" 
                     required 
@@ -76,7 +76,7 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
                     value={password} 
                     onChange={e => {
                         setPassword(e.target.value);
-                        if (error) clearError();
+                        // Don't clear error on typing - let user see the error
                     }} 
                     className="pl-10" 
                     required 
