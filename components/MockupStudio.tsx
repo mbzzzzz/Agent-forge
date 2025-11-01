@@ -24,18 +24,29 @@ const MockupStudio: React.FC = () => {
         setError(null);
         setGeneratedImage(null);
         try {
+            console.log('Starting mockup generation:', { mockupType, designDescription });
             const imageBytes = await generateMockup(mockupType, designDescription);
+            console.log('Mockup generation successful, imageBytes length:', imageBytes?.length);
+            if (!imageBytes) {
+                throw new Error('No image data returned from API');
+            }
             setGeneratedImage(`data:image/png;base64,${imageBytes}`);
         } catch (e: any) {
             console.error('Mockup generation error:', e);
-            const errorMsg = e.message || 'Failed to generate mockup. Please try again.';
-            if (errorMsg.includes('API key')) {
+            const errorMessage = e?.message || e?.toString() || 'Unknown error occurred';
+            console.error('Error details:', { message: errorMessage, error: e });
+            
+            if (errorMessage.includes('API key')) {
                 setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key.');
             } else {
-                setError(errorMsg.length > 100 ? 'Failed to generate mockup. Please check your API key and try again.' : errorMsg);
+                const errorMsg = errorMessage.length > 100 
+                    ? 'Failed to generate mockup. Please check your API key and try again.' 
+                    : errorMessage;
+                setError(errorMsg);
             }
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     return (
@@ -110,14 +121,28 @@ const MockupStudio: React.FC = () => {
                         </div>
                     </motion.div>
                 )}
-                {error && (
+                {error && !isLoading && (
                   <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="absolute bottom-6 left-6 bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-4 rounded-xl shadow-lg flex items-center gap-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute inset-0 flex items-center justify-center z-50"
                   >
-                    <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                    <span>{error}</span>
+                    <div className="bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-6 rounded-xl shadow-2xl max-w-md mx-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                        <h3 className="text-lg font-bold">Generation Failed</h3>
+                      </div>
+                      <p className="text-sm mb-4">{error}</p>
+                      <Button 
+                        onClick={() => {
+                          setError(null);
+                          setGeneratedImage(null);
+                        }}
+                        className="w-full"
+                      >
+                        Try Again
+                      </Button>
+                    </div>
                   </motion.div>
                 )}
             </motion.div>

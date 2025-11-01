@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import Button from './common/Button';
 import { generateVideo } from '../services/geminiService';
 import ApiKeySelector from './common/ApiKeySelector';
@@ -37,22 +38,30 @@ const VideoStudio: React.FC = () => {
     setGeneratedVideoUrl(null);
     setStatus('');
     try {
+      console.log('Starting video generation with prompt:', prompt);
       const url = await generateVideo(prompt, setStatus);
+      console.log('Video generation successful, URL:', url);
       setGeneratedVideoUrl(url);
     } catch (e: any) {
       console.error('Video generation error:', e);
-      if (e.message?.includes('Requested entity was not found') || e.message?.includes('API key')) {
+      const errorMessage = e?.message || e?.toString() || 'Unknown error occurred';
+      console.error('Error details:', { message: errorMessage, error: e });
+      
+      if (errorMessage.includes('Requested entity was not found') || errorMessage.includes('API key')) {
         setError("API Key validation failed. Please select your API key again.");
         setIsKeySelected(false);
-      } else if (e.message?.includes('API key not found')) {
+      } else if (errorMessage.includes('API key not found')) {
         setError("API key is required. Please select an API key.");
         setIsKeySelected(false);
       } else {
-        const errorMsg = e.message || 'Failed to generate video. Please try again.';
-        setError(errorMsg.length > 100 ? 'Failed to generate video. Please check your API key and try again.' : errorMsg);
+        const errorMsg = errorMessage.length > 100 
+          ? 'Failed to generate video. Please check your API key and try again.' 
+          : errorMessage;
+        setError(errorMsg);
       }
     } finally {
       setIsLoading(false);
+      setStatus('');
     }
   };
 
@@ -92,7 +101,28 @@ const VideoStudio: React.FC = () => {
           </div>
         )}
         {!isLoading && error && (
-          <p className="text-red-400 text-center">{error}</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute inset-0 flex items-center justify-center z-50"
+          >
+            <div className="bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-6 rounded-xl shadow-2xl max-w-md mx-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                <h3 className="text-lg font-bold">Generation Failed</h3>
+              </div>
+              <p className="text-sm">{error}</p>
+              <Button 
+                onClick={() => {
+                  setError(null);
+                  setGeneratedVideoUrl(null);
+                }}
+                className="mt-4 w-full"
+              >
+                Try Again
+              </Button>
+            </div>
+          </motion.div>
         )}
         {!isLoading && !generatedVideoUrl && !error && (
             <div className="text-center text-on-surface-variant/70">
