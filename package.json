@@ -9,7 +9,14 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:playwright": "playwright test",
+    "test:playwright:ui": "playwright test --ui",
+    "test:playwright:headed": "playwright test --headed",
+    "test:cypress": "cypress run",
+    "test:cypress:open": "cypress open",
+    "test:selenium": "jest --config tests/selenium/jest.config.js",
+    "test:e2e": "npm run test:playwright && npm run test:cypress"
   },
   "dependencies": {
     "@google/genai": "^1.28.0",
@@ -22,13 +29,22 @@
     "three": "^0.181.0"
   },
   "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@playwright/test": "^1.56.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.14.0",
+    "@types/selenium-webdriver": "^4.35.3",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/ui": "^4.0.6",
+    "chromedriver": "^142.0.0",
+    "cypress": "^15.5.0",
+    "geckodriver": "^6.0.2",
+    "jest": "^30.2.0",
     "jsdom": "^27.1.0",
+    "playwright": "^1.56.1",
+    "selenium-webdriver": "^4.38.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^4.0.6"

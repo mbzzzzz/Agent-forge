@@ -59,27 +59,52 @@ const PosterStudio: React.FC = () => {
                 <h3 className="text-xl font-bold font-display mb-6 text-on-surface">Poster Details</h3>
                 <div className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2">Poster Type</label>
-                        <Select value={posterType} onChange={e => setPosterType(e.target.value)}>
+                        <label htmlFor="poster-type" className="block text-sm font-medium text-on-surface-variant mb-2">
+                            Poster Type
+                        </label>
+                        <Select 
+                            id="poster-type"
+                            value={posterType} 
+                            onChange={e => setPosterType(e.target.value)}
+                            aria-label="Select poster type"
+                        >
                             {POSTER_TYPES.map(type => <option key={type} value={type} className="bg-surface">{type}</option>)}
                         </Select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2">Theme / Concept</label>
+                        <label htmlFor="poster-theme" className="block text-sm font-medium text-on-surface-variant mb-2">
+                            Theme / Concept
+                        </label>
                         <textarea
+                            id="poster-theme"
                             value={theme}
                             onChange={(e) => setTheme(e.target.value)}
-                            placeholder="e.g., A minimalist design for a tech conference"
-                            className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-on-surface placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-24 resize-none transition"
+                            placeholder="e.g., A minimalist design for a tech conference with vibrant colors and modern typography"
+                            aria-describedby="theme-helper"
+                            className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-on-surface placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none transition"
+                            rows={4}
+                        />
+                        <p id="theme-helper" className="text-xs text-on-surface-variant/70 mt-1">
+                            Describe the visual style, mood, and key elements you want in your poster
+                        </p>
+                    </div>
+                     <div>
+                        <Input 
+                            label="Headline Text"
+                            value={headline} 
+                            onChange={e => setHeadline(e.target.value)}
+                            placeholder="Enter your main headline"
+                            helperText="Main attention-grabbing text"
                         />
                     </div>
                      <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2">Headline Text</label>
-                        <Input value={headline} onChange={e => setHeadline(e.target.value)} />
-                    </div>
-                     <div>
-                        <label className="block text-sm font-medium text-on-surface-variant mb-2">Subheadline Text</label>
-                        <Input value={subheadline} onChange={e => setSubheadline(e.target.value)} />
+                        <Input 
+                            label="Subheadline Text"
+                            value={subheadline} 
+                            onChange={e => setSubheadline(e.target.value)}
+                            placeholder="Enter supporting text"
+                            helperText="Additional descriptive text"
+                        />
                     </div>
                     <Button onClick={handleGenerate} isLoading={isLoading} className="w-full">
                         Generate Poster

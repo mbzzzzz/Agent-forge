@@ -143,15 +143,45 @@ const BrandKitStudio: React.FC = () => {
       )}
 
       <GlassCard title="Brand Foundation">
-        <p className="text-on-surface-variant mb-4">Describe your business, and we'll generate a complete brand kit for you.</p>
-        <textarea
-          value={businessInfo}
-          onChange={(e) => setBusinessInfo(e.target.value)}
-          placeholder="e.g., An eco-friendly coffee shop targeting young professionals..."
-          className="w-full bg-surface-variant/30 backdrop-blur-sm border border-outline/40 rounded-lg px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 h-24 resize-none transition-all duration-200 hover:border-outline/60"
-        />
-        <Button onClick={handleGenerateAll} isLoading={isGeneratingAll} className="mt-4">
-          {isGeneratingAll ? 'Building Your Brand...' : 'Generate Full Brand Kit'}
+        <p className="text-on-surface-variant mb-4">
+          Describe your business, and we'll generate a complete brand kit for you. Be as detailed as possible about your target audience, values, and style preferences.
+        </p>
+        <div className="space-y-2">
+          <label htmlFor="business-info" className="block text-sm font-medium text-on-surface-variant">
+            Business Description <span className="text-red-400" aria-label="required">*</span>
+          </label>
+          <textarea
+            id="business-info"
+            value={businessInfo}
+            onChange={(e) => setBusinessInfo(e.target.value)}
+            placeholder="e.g., An eco-friendly coffee shop targeting young professionals in urban areas who value sustainability and artisanal products..."
+            aria-describedby="business-info-helper"
+            aria-required="true"
+            className="w-full bg-surface-variant/30 backdrop-blur-sm border border-outline/40 rounded-lg px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 h-28 resize-none transition-all duration-200 hover:border-outline/60"
+            rows={4}
+          />
+          <p id="business-info-helper" className="text-xs text-on-surface-variant/70">
+            Minimum 20 characters recommended for best results
+          </p>
+        </div>
+        <Button 
+          onClick={handleGenerateAll} 
+          isLoading={isGeneratingAll} 
+          className="mt-6 w-full"
+          disabled={!businessInfo.trim() || businessInfo.trim().length < 10}
+          aria-label={isGeneratingAll ? 'Generating brand kit' : 'Generate full brand kit'}
+        >
+          {isGeneratingAll ? (
+            <>
+              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Building Your Brand...
+            </>
+          ) : (
+            'Generate Full Brand Kit'
+          )}
         </Button>
       </GlassCard>
       
