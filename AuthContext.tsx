@@ -21,49 +21,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
+    // Helper function to map session to user
+    const mapSessionToUser = (session: any): User | null => {
+      if (!session?.user) return null;
+      return {
+        uid: session.user.id,
+        email: session.user.email ?? null,
+        displayName: session.user.user_metadata?.full_name ?? session.user.user_metadata?.name ?? null,
+        photoURL: session.user.user_metadata?.avatar_url ?? session.user.user_metadata?.picture ?? null,
+      };
+    };
+
     // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
       
-      if (session?.user) {
-        const mapped: User = {
-          uid: session.user.id,
-          email: session.user.email ?? null,
-          displayName: session.user.user_metadata?.full_name ?? session.user.user_metadata?.name ?? null,
-          photoURL: session.user.user_metadata?.avatar_url ?? session.user.user_metadata?.picture ?? null,
-        };
-        setUser(mapped);
-      } else {
-        setUser(null);
-      }
+      if (!isMounted) return;
+      
+      const mappedUser = mapSessionToUser(session);
+      setUser(mappedUser);
       setLoading(false);
     });
 
     // Get initial session
     supabase.auth.getSession().then(({ data, error }) => {
+      if (!isMounted) return;
+      
       if (error) {
         console.error('Error getting initial session:', error);
+        setUser(null);
         setLoading(false);
         return;
       }
       
       const session = data.session;
       console.log('Initial session:', session?.user?.email || 'No session');
-      if (session?.user) {
-        const mapped: User = {
-          uid: session.user.id,
-          email: session.user.email ?? null,
-          displayName: session.user.user_metadata?.full_name ?? session.user.user_metadata?.name ?? null,
-          photoURL: session.user.user_metadata?.avatar_url ?? session.user.user_metadata?.picture ?? null,
-        };
-        setUser(mapped);
-      } else {
-        setUser(null);
-      }
+      const mappedUser = mapSessionToUser(session);
+      setUser(mappedUser);
       setLoading(false);
     });
 
     return () => {
+      isMounted = false;
       authListener.subscription.unsubscribe();
     };
   }, []);
@@ -84,12 +85,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
       
-      // Always verify the session after login to ensure it's persisted
-      // The onAuthStateChange listener will also update the user state
+      // Set user immediately if session exists to avoid redirect delay
+      // The onAuthStateChange listener will also fire and confirm/update the state
       if (data?.session?.user) {
         console.log('✅ Login successful, user:', data.session.user.email);
-        // Give the auth state change listener a moment to fire
-        // But also set user immediately to avoid redirect
         const mapped: User = {
           uid: data.session.user.id,
           email: data.session.user.email ?? null,
@@ -97,33 +96,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           photoURL: data.session.user.user_metadata?.avatar_url ?? data.session.user.user_metadata?.picture ?? null,
         };
         setUser(mapped);
-        
-        // Verify session is persisted
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !sessionData.session) {
-          console.error('❌ Session not persisted:', sessionError);
-          setError('Session not saved. Please try again.');
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-        
         setLoading(false);
       } else {
-        // Wait for session to be processed and persisted
+        // Wait for session to be processed
         console.log('⏳ No session in response, checking stored session...');
         await new Promise(resolve => setTimeout(resolve, 500));
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error('❌ Error getting session:', sessionError);
-          setError('Failed to retrieve session. Please try again.');
-          setLoading(false);
-          return;
-        }
-        
+        const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session?.user) {
-          console.log('✅ Session found after wait, user:', sessionData.session.user.email);
+          console.log('✅ Session found, user:', sessionData.session.user.email);
           const mapped: User = {
             uid: sessionData.session.user.id,
             email: sessionData.session.user.email ?? null,

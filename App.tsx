@@ -233,6 +233,11 @@ const App: React.FC = () => {
   const { user, loading } = useAuth();
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('App render - user:', user?.email || 'null', 'loading:', loading);
+  }, [user, loading]);
+
   // Listen for route changes
   useEffect(() => {
     const handleLocationChange = () => {
@@ -257,8 +262,7 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center">
-        {/* You can replace this with a more sophisticated loading spinner */}
+      <div className="h-screen w-full flex items-center justify-center bg-background">
         <div className="text-on-surface-variant">Loading...</div>
       </div>
     );
