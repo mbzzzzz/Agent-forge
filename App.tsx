@@ -256,10 +256,12 @@ const App: React.FC = () => {
   }, []);
 
   // Handle OAuth callback route - check both pathname and query params
+  // Only show AuthCallback if we're on the callback path OR have auth params AND not loading
   const urlParams = new URLSearchParams(window.location.search);
   const hasAuthCode = urlParams.has('code') || window.location.hash.includes('access_token') || window.location.hash.includes('code');
+  const isCallbackRoute = currentPath === '/auth/callback' || (hasAuthCode && !loading);
   
-  if (currentPath === '/auth/callback' || hasAuthCode) {
+  if (isCallbackRoute) {
     return <AuthCallback />;
   }
 

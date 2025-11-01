@@ -27,36 +27,46 @@ const AuthCallback: React.FC = () => {
 
         // Wait for Supabase's detectSessionInUrl to process the code/hash
         // Supabase handles both hash fragments (#access_token) and query params (?code)
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Try multiple times to ensure session is processed
+        let session = null;
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        while (attempts < maxAttempts && !session) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const { data, error: sessionError } = await supabase.auth.getSession();
+          if (data?.session?.user) {
+            session = data.session;
+            console.log(`✅ Session found after ${attempts + 1} attempt(s)`);
+            break;
+          }
+          attempts++;
+        }
 
-        // Clean URL now
+        // Clean URL now (whether session found or not)
         cleanUrl();
 
-        // Check for session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Final session check if not found yet
+        if (!session) {
+          const { data: { session: finalSession }, error } = await supabase.auth.getSession();
+          session = finalSession;
+        }
         
         console.log('AuthCallback: Session check result', {
           hasSession: !!session,
           hasUser: !!session?.user,
-          userEmail: session?.user?.email,
-          error: error?.message
+          userEmail: session?.user?.email
         });
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          setStatus('error');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
-          return;
-        }
 
         if (session?.user) {
           console.log('✅ AuthCallback: Session found, redirecting to workspace');
           setStatus('success');
-          // Give a moment for auth state to propagate
+          // Clean URL completely before redirecting
+          window.history.replaceState({}, '', '/');
+          // Give a moment for auth state to propagate, then redirect
           setTimeout(() => {
-            window.location.href = '/';
+            // Use replace to avoid adding to history
+            window.location.replace('/');
           }, 500);
         } else {
           console.warn('⚠️ AuthCallback: No session found after OAuth callback');
