@@ -22,8 +22,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
+      
+      // Handle SIGNED_OUT explicitly
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
+      // For SIGNED_IN and other events, use the session if provided
       if (session?.user) {
         const mapped: User = {
           uid: session.user.id,
@@ -33,9 +42,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
         setUser(mapped);
         setLoading(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // If SIGNED_IN/TOKEN_REFRESHED but no session in callback, fetch it
+        // This can happen if the session isn't immediately available
+        const { data: { session: fetchedSession }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error fetching session:', error);
+          setLoading(false);
+          return;
+        }
+        
+        if (fetchedSession?.user) {
+          const mapped: User = {
+            uid: fetchedSession.user.id,
+            email: fetchedSession.user.email ?? null,
+            displayName: fetchedSession.user.user_metadata?.full_name ?? fetchedSession.user.user_metadata?.name ?? null,
+            photoURL: fetchedSession.user.user_metadata?.avatar_url ?? fetchedSession.user.user_metadata?.picture ?? null,
+          };
+          setUser(mapped);
+          setLoading(false);
+        } else {
+          // Don't clear user on SIGNED_IN if we can't find session - might be a timing issue
+          // Only update loading state
+          console.warn('SIGNED_IN event but no session found - might be timing issue');
+          setLoading(false);
+        }
       } else {
-        setUser(null);
-        setLoading(false);
+        // For other events, check current session before making any changes
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession?.user) {
+          const mapped: User = {
+            uid: currentSession.user.id,
+            email: currentSession.user.email ?? null,
+            displayName: currentSession.user.user_metadata?.full_name ?? currentSession.user.user_metadata?.name ?? null,
+            photoURL: currentSession.user.user_metadata?.avatar_url ?? currentSession.user.user_metadata?.picture ?? null,
+          };
+          setUser(mapped);
+          setLoading(false);
+        } else {
+          // Only clear user if we're sure there's no session
+          setUser(null);
+          setLoading(false);
+        }
       }
     });
 
@@ -84,9 +132,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
       
+      // Always verify the session after login to ensure it's persisted
+      // The onAuthStateChange listener will also update the user state
       if (data?.session?.user) {
-        // Session is returned, update user state immediately
         console.log('✅ Login successful, user:', data.session.user.email);
+        // Give the auth state change listener a moment to fire
+        // But also set user immediately to avoid redirect
         const mapped: User = {
           uid: data.session.user.id,
           email: data.session.user.email ?? null,
@@ -94,9 +145,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           photoURL: data.session.user.user_metadata?.avatar_url ?? data.session.user.user_metadata?.picture ?? null,
         };
         setUser(mapped);
+        
+        // Verify session is persisted
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !sessionData.session) {
+          console.error('❌ Session not persisted:', sessionError);
+          setError('Session not saved. Please try again.');
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        
         setLoading(false);
       } else {
-        // Wait a moment for session to be processed
+        // Wait for session to be processed and persisted
         console.log('⏳ No session in response, checking stored session...');
         await new Promise(resolve => setTimeout(resolve, 500));
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -116,11 +179,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             photoURL: sessionData.session.user.user_metadata?.avatar_url ?? sessionData.session.user.user_metadata?.picture ?? null,
           };
           setUser(mapped);
+          setLoading(false);
         } else {
           console.error('❌ No session found after login attempt');
           setError('Login successful but session not found. Please try again.');
+          setLoading(false);
         }
-        setLoading(false);
       }
     } catch (err: any) {
       const errorMessage = err?.message || 'An unexpected error occurred. Please try again.';
