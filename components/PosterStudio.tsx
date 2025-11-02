@@ -5,7 +5,7 @@ import Button from './common/Button';
 import Input from './common/Input';
 import Select from './common/Select';
 import { POSTER_TYPES } from '../constants';
-import { generatePoster } from '../services/geminiService';
+import { generatePoster } from '../services/huggingFaceService';
 import Loader from './common/Loader';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 
@@ -41,7 +41,7 @@ const PosterStudio: React.FC = () => {
             console.error('Error details:', { message: errorMessage, error: e });
             
             if (errorMessage.includes('API key')) {
-                setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key.');
+                setError('API key is required. Please set HF_TOKEN environment variable or select an API key.');
             } else {
                 const errorMsg = errorMessage.length > 100 
                     ? 'Failed to generate poster. Please check your API key and try again.' 

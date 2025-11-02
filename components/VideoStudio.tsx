@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Button from './common/Button';
-import { generateVideo } from '../services/geminiService';
+import { generateVideo } from '../services/huggingFaceService';
 import ApiKeySelector from './common/ApiKeySelector';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 

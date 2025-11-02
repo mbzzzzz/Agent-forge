@@ -21,7 +21,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ssLIh-wJz3jHnCRY4l0Oum
    ```env
    VITE_SUPABASE_URL=https://wgltfxvdbxvfypomirza.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnbHRmeHZkYnh2Znlwb21pcnphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTI3MDIsImV4cCI6MjA3Njk4ODcwMn0.2Qu86mDEJTYUzqTfF_xQL0GCMO0ZjLiQr9CA_9Krhrg
-   GEMINI_API_KEY=your_gemini_api_key_here
+   HF_TOKEN=your_huggingface_api_token_here
    ```
 
 3. Run the app:
@@ -44,7 +44,7 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ssLIh-wJz3jHnCRY4l0Oum
 - **Frontend:** React 19, TypeScript, Vite
 - **UI:** Tailwind CSS, Framer Motion, Lucide Icons
 - **Backend:** Supabase (Auth & Database)
-- **AI:** Google Gemini API
+- **AI:** Hugging Face Inference API (Qwen/Qwen-Image for images, Meta-Llama-3.1-8B-Instruct for text)
 - **Deployment:** Vercel
 
 ## Deploy to Vercel
@@ -57,14 +57,15 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ssLIh-wJz3jHnCRY4l0Oum
 
 ### ⚠️ Important: Set Environment Variables
 
-Before using the app, add the following environment variables in the Vercel dashboard:
+Before using the app, update the environment variables in the Vercel dashboard:
 
 1. Go to: [Vercel Project Settings > Environment Variables](https://vercel.com/mustafabutt1s-projects/agentforge-studio/settings/environment-variables)
-2. Add these variables for **Production, Preview, and Development**:
+2. **REMOVE** the old `GEMINI_API_KEY` variable if it exists
+3. **ADD/UPDATE** these variables for **Production, Preview, and Development**:
    - `VITE_SUPABASE_URL` = `https://wgltfxvdbxvfypomirza.supabase.co`
    - `VITE_SUPABASE_ANON_KEY` = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnbHRmeHZkYnh2Znlwb21pcnphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0MTI3MDIsImV4cCI6MjA3Njk4ODcwMn0.2Qu86mDEJTYUzqTfF_xQL0GCMO0ZjLiQr9CA_9Krhrg`
-   - `GEMINI_API_KEY` = (Your Gemini API key)
-3. After adding variables, **redeploy** the project from the dashboard
+   - `HF_TOKEN` = (Your Hugging Face API token)
+4. After updating variables, **redeploy** the project from the dashboard
 
 ### Deploy Commands
 

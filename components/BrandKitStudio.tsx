@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { generateBrandIdentity, generateLogo, generateColorPalette, generateTypography, generateBrandAsset } from '../services/geminiService';
+import { generateBrandIdentity, generateLogo, generateColorPalette, generateTypography, generateBrandAsset } from '../services/huggingFaceService';
 import { BrandIdentity, GeneratedImage, ColorPalette, Typography, BrandAsset } from '../types';
 import Button from './common/Button';
 import Loader from './common/Loader';
@@ -135,7 +135,7 @@ const BrandKitStudio: React.FC = () => {
       const errorMessage = e?.message || 'Unknown error occurred';
       
       if (errorMessage.includes('API key')) {
-        setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key in settings.');
+        setError('API key is required. Please set HF_TOKEN environment variable or select an API key in settings.');
       } else if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
         setError('Request timed out. Please check your internet connection and try again.');
       } else {

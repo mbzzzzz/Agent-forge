@@ -19,7 +19,6 @@
     "test:e2e": "npm run test:playwright && npm run test:cypress"
   },
   "dependencies": {
-    "@google/genai": "^1.28.0",
     "@supabase/supabase-js": "^2.47.10",
     "@types/three": "^0.181.0",
     "framer-motion": "^11.3.19",

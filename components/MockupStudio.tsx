@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Button from './common/Button';
 import Select from './common/Select';
 import { MOCKUP_CATEGORIES, MockupIcon } from '../constants';
-import { generateMockup } from '../services/geminiService';
+import { generateMockup } from '../services/huggingFaceService';
 import Loader from './common/Loader';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 
@@ -37,7 +37,7 @@ const MockupStudio: React.FC = () => {
             console.error('Error details:', { message: errorMessage, error: e });
             
             if (errorMessage.includes('API key')) {
-                setError('API key is required. Please set GEMINI_API_KEY environment variable or select an API key.');
+                setError('API key is required. Please set HF_TOKEN environment variable or select an API key.');
             } else {
                 const errorMsg = errorMessage.length > 100 
                     ? 'Failed to generate mockup. Please check your API key and try again.' 

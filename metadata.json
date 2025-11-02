@@ -1,5 +1,5 @@
 {
   "name": "AgentForge Studio - COMPLETE EDITION",
-  "description": "An AI-powered creative suite where teams collaborate to design brand identities, generate product mockups, create social media content, and produce promotional videos using Gemini, Imagen, and Veo models.",
+  "description": "An AI-powered creative suite where teams collaborate to design brand identities, generate product mockups, create social media content, and produce promotional videos using Hugging Face models (Qwen/Qwen-Image and Meta-Llama-3.1-8B-Instruct).",
   "requestFramePermissions": []
 }

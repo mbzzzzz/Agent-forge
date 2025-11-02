@@ -19,7 +19,7 @@ if (typeof window !== 'undefined' && !(window as any).aistudio) {
       // Try to get API key from sessionStorage (for mock) or return null
       const apiKey = sessionStorage.getItem('aistudio_api_key') || 
                      (typeof process !== 'undefined' && process.env?.API_KEY) ||
-                     (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY);
+                     (typeof process !== 'undefined' && process.env?.HF_TOKEN);
       return apiKey || null;
     }
   };
@@ -48,13 +48,13 @@ const ApiKeySelector: React.FC<ApiKeySelectorProps> = ({ onKeySelected }) => {
       </div>
       <h3 className="text-xl font-bold font-display text-on-surface mb-2">API Key Required</h3>
       <p className="text-on-surface-variant mb-6">
-        To generate videos with the Veo model, please select an API key.
+        To generate content with Hugging Face models, please select an API key.
       </p>
       <Button onClick={handleSelectKey}>
         Select API Key
       </Button>
       <p className="text-xs text-on-surface-variant/70 mt-4">
-        For billing info, visit the <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">official documentation</a>.
+        For billing info, visit the <a href="https://huggingface.co/pricing" target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline">Hugging Face pricing page</a>.
       </p>
     </div>
   );
