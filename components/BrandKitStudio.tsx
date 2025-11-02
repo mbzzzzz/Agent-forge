@@ -5,6 +5,7 @@ import { generateBrandIdentity, generateLogo, generateColorPalette, generateTypo
 import { BrandIdentity, GeneratedImage, ColorPalette, Typography, BrandAsset } from '../types';
 import Button from './common/Button';
 import Loader from './common/Loader';
+import GeneratingLoader from './common/GeneratingLoader';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 import { useAppContext } from '../App';
 
@@ -235,7 +236,7 @@ const BrandKitStudio: React.FC = () => {
                         <ShareAction dataUrl={logos[0].src} filename={`${brandIdentity.name}-logo.png`} title={`${brandIdentity.name} Logo`} />
                     </div>
                 </motion.div>
-             ): <div className="flex items-center justify-center h-48"><Loader text="Generating logo..." /></div>}
+             ): <div className="flex items-center justify-center h-48"><GeneratingLoader /></div>}
             </GlassCard>
             <div className="space-y-6">
                 <GlassCard title="Brand Assets">

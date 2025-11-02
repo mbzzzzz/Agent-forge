@@ -83,29 +83,29 @@ async function generateImage(
   }
 ): Promise<string> {
   const apiKey = getApiKey();
-  // Using Stable Diffusion XL for reliable image generation via Inference API
-  const model = 'stabilityai/stable-diffusion-xl-base-1.0';
+  // Using Flux Schnell for fast, high-quality image generation via Inference API
+  const model = 'black-forest-labs/FLUX.1-schnell';
   
   // Add positive magic prompt enhancement for better quality
   const enhancedPrompt = prompt + ', ultra high quality, detailed, professional, 4k, 8k';
   const negativePrompt = options?.negative_prompt || 'blurry, low quality, distorted, ugly, bad anatomy';
 
-  // Standard SDXL dimensions (must be multiples of 8)
+  // Flux supports various aspect ratios, standard dimensions
   const aspectRatios: Record<string, [number, number]> = {
     "1:1": [1024, 1024],
-    "16:9": [1152, 896],
-    "9:16": [896, 1152],
-    "4:3": [1024, 896],
-    "3:4": [896, 1024],
-    "3:2": [1152, 768],
-    "2:3": [768, 1152],
+    "16:9": [1536, 864],
+    "9:16": [864, 1536],
+    "4:3": [1280, 1024],
+    "3:4": [1024, 1280],
+    "3:2": [1536, 1024],
+    "2:3": [1024, 1536],
   };
 
   // Determine aspect ratio from dimensions
-  let width = options?.width || 1152;
-  let height = options?.height || 896;
+  let width = options?.width || 1536;
+  let height = options?.height || 864;
   
-  // Find closest matching aspect ratio (must be multiple of 8 for SDXL)
+  // Find closest matching aspect ratio
   const ratio = width / height;
   let closestRatio: [number, number] | null = null;
   let minDiff = Infinity;
@@ -120,10 +120,6 @@ async function generateImage(
 
   if (closestRatio) {
     [width, height] = closestRatio;
-  } else {
-    // Ensure dimensions are multiples of 8 for SDXL
-    width = Math.floor(width / 8) * 8;
-    height = Math.floor(height / 8) * 8;
   }
 
   const url = `${HF_API_BASE}/${model}`;
@@ -139,8 +135,8 @@ async function generateImage(
       parameters: {
         width,
         height,
-        num_inference_steps: options?.num_inference_steps || 30,
-        guidance_scale: 7.5,
+        num_inference_steps: options?.num_inference_steps || 28,
+        guidance_scale: 3.5,
         negative_prompt: negativePrompt,
       },
       options: {
@@ -306,9 +302,9 @@ export const generateMockup = async (mockupType: string, designDescription: stri
     const prompt = `Photorealistic product mockup: a ${mockupType} displaying "${designDescription}". Environment: modern minimalist desk setup. Lighting: soft natural daylight. Angle: 45-degree angle view. Style: professional product photography, sharp focus, high resolution, commercial quality. Background: blurred office interior.`;
 
     const base64Image = await generateImage(prompt, {
-        width: 1152,
-        height: 896,
-        num_inference_steps: 30,
+        width: 1536,
+        height: 864,
+        num_inference_steps: 28,
     });
 
     return base64Image;
@@ -319,9 +315,9 @@ export const generatePoster = async (posterType: string, theme: string): Promise
     const prompt = `Professional poster design for a ${posterType}. Theme: ${theme}. Visual style: Modern and vibrant with dynamic typography. Composition: Strong visual hierarchy, eye-catching. Mood: Energetic and exciting. High quality print-ready design, 18x24 inches aspect ratio.`;
     
     const base64Image = await generateImage(prompt, {
-        width: 1024,
-        height: 896,
-        num_inference_steps: 30,
+        width: 1280,
+        height: 1024,
+        num_inference_steps: 28,
     });
 
     return base64Image;
@@ -332,11 +328,11 @@ export const generateSocialPost = async (platform: string, theme: string): Promi
     const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring. Professional, high-quality image.`;
     
     const aspectRatio = platform === 'Instagram Stories' ? '9:16' : '1:1';
-    const dimensions = aspectRatio === '9:16' ? { width: 896, height: 1152 } : { width: 1024, height: 1024 };
+    const dimensions = aspectRatio === '9:16' ? { width: 864, height: 1536 } : { width: 1024, height: 1024 };
     
     const imageBase64 = await generateImage(imagePrompt, {
         ...dimensions,
-        num_inference_steps: 30,
+        num_inference_steps: 28,
     });
 
     const captionPrompt = `You are a Social Media Copywriter. Write an engaging ${platform} caption for a post about "${theme}". Include a strong hook, provide value, and end with a call-to-action. Return only the caption text, no additional formatting.`;
@@ -365,9 +361,9 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
         // For now, generate a single high-quality image
         // In a real implementation, you'd want to use a video generation model
         const base64Image = await generateImage(prompt, {
-            width: 1152,
-            height: 896,
-            num_inference_steps: 30,
+            width: 1536,
+            height: 864,
+            num_inference_steps: 28,
         });
 
         // Convert base64 to blob URL for compatibility

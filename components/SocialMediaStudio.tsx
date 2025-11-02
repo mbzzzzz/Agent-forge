@@ -4,7 +4,7 @@ import Button from './common/Button';
 import Select from './common/Select';
 import { SOCIAL_PLATFORMS } from '../constants';
 import { generateSocialPost } from '../services/huggingFaceService';
-import Loader from './common/Loader';
+import GeneratingLoader from './common/GeneratingLoader';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 
 interface SocialPost {
@@ -92,7 +92,7 @@ const SocialMediaStudio: React.FC = () => {
 
             <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-lg min-h-[60vh]">
                 <h3 className="text-xl font-bold font-display mb-4 text-on-surface">Generated Post</h3>
-                {isLoading && <Loader text="Crafting your social post..." />}
+                {isLoading && <GeneratingLoader />}
                 {error && <p className="text-red-400">{error}</p>}
                 {!isLoading && !generatedPost && (
                      <div className="text-center text-on-surface-variant/70 pt-16">

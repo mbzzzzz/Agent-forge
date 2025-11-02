@@ -38,14 +38,14 @@ const Sidebar: React.FC<{
       
       <div className="flex items-center gap-3 mb-10 px-2 pt-2">
         <motion.div 
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          className="bg-gradient-to-br from-primary to-secondary p-3 rounded-xl shadow-lg"
+          whileHover={{ scale: 1.05, rotate: 3 }}
+          className="bg-gradient-to-br from-primary to-secondary p-2 rounded-lg shadow-lg shrink-0"
         >
-          <Bot className="w-6 h-6 text-on-primary"/>
+          <Bot className="w-5 h-5 text-on-primary"/>
         </motion.div>
-        <div>
-          <h1 className="text-xl font-bold font-display text-on-surface">AgentForge</h1>
-          <p className="text-xs text-on-surface-variant/70">Creative Studio</p>
+        <div className="min-w-0">
+          <h1 className="text-lg font-bold font-display text-on-surface leading-tight">AgentForge</h1>
+          <p className="text-xs text-on-surface-variant/70 leading-tight">Creative Studio</p>
         </div>
       </div>
       <nav className="flex flex-col gap-2">

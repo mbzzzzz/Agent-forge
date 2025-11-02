@@ -6,7 +6,7 @@ import Input from './common/Input';
 import Select from './common/Select';
 import { POSTER_TYPES } from '../constants';
 import { generatePoster } from '../services/huggingFaceService';
-import Loader from './common/Loader';
+import GeneratingLoader from './common/GeneratingLoader';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 
 const PosterStudio: React.FC = () => {
@@ -112,7 +112,7 @@ const PosterStudio: React.FC = () => {
                 </div>
             </div>
             <div className="lg:col-span-2 bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-lg flex items-center justify-center min-h-[70vh] aspect-[3/4] relative">
-                {isLoading && <Loader text="Designing your poster..." />}
+                {isLoading && <GeneratingLoader />}
                 {!isLoading && !generatedImage && !error && (
                     <div className="text-center text-on-surface-variant/70">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-24 h-24 mx-auto mb-4">

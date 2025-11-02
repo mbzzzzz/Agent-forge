@@ -5,7 +5,7 @@ import Button from './common/Button';
 import Select from './common/Select';
 import { MOCKUP_CATEGORIES, MockupIcon } from '../constants';
 import { generateMockup } from '../services/huggingFaceService';
-import Loader from './common/Loader';
+import GeneratingLoader from './common/GeneratingLoader';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 
 const MockupStudio: React.FC = () => {
@@ -105,7 +105,7 @@ const MockupStudio: React.FC = () => {
               className="lg:col-span-2 bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-xl shadow-2xl flex items-center justify-center min-h-[60vh] relative overflow-hidden group"
             >
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-60"></div>
-                {isLoading && <Loader text="Generating photorealistic mockup..." />}
+                {isLoading && <GeneratingLoader />}
                 {!isLoading && !generatedImage && !error && (
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.95 }}
