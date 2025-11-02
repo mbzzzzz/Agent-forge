@@ -10,7 +10,8 @@ import VideoStudio from './components/VideoStudio';
 import AuthScreen from './components/Auth';
 import AuthCallback from './components/AuthCallback';
 import { useAuth } from './AuthContext';
-import { User, LogOut, Settings, ChevronDown, Bot } from 'lucide-react';
+import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import AgentForgeLogo from './components/common/AgentForgeLogo';
 import { ShaderAnimation } from './components/ui/shader-animation';
 
 
@@ -36,16 +37,16 @@ const Sidebar: React.FC<{
       {/* Gradient accent */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
       
-      <div className="flex items-center gap-3 mb-10 px-2 pt-2">
+      <div className="flex items-center gap-2.5 mb-8 px-2 pt-2">
         <motion.div 
-          whileHover={{ scale: 1.05, rotate: 3 }}
-          className="bg-gradient-to-br from-primary to-secondary p-2 rounded-lg shadow-lg shrink-0"
+          whileHover={{ scale: 1.05 }}
+          className="bg-gradient-to-br from-primary to-secondary p-1.5 rounded-md shadow-md shrink-0"
         >
-          <Bot className="w-5 h-5 text-on-primary"/>
+          <AgentForgeLogo className="w-4 h-4" />
         </motion.div>
-        <div className="min-w-0">
-          <h1 className="text-lg font-bold font-display text-on-surface leading-tight">AgentForge</h1>
-          <p className="text-xs text-on-surface-variant/70 leading-tight">Creative Studio</p>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base font-bold font-display text-on-surface leading-tight">AgentForge</h1>
+          <p className="text-[10px] text-on-surface-variant/70 leading-tight">Creative Studio</p>
         </div>
       </div>
       <nav className="flex flex-col gap-2">

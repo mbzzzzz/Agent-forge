@@ -350,34 +350,80 @@ export const generateSocialPost = async (platform: string, theme: string): Promi
 
 // Video Studio
 export const generateVideo = async (prompt: string, setStatus: (status: string) => void): Promise<string> => {
+    const apiKey = getApiKey();
+    const model = 'Wan-AI/Wan2.2-TI2V-5B';
+    const url = `${HF_API_BASE}/${model}`;
+    
     setStatus('Initializing video generation...');
     
-    // Note: Hugging Face doesn't have a direct video generation model like Veo
-    // We'll use an image-to-video model or provide a message
-    // Using stable-video-diffusion or similar if available
-    setStatus('Video generation is not directly supported via Hugging Face Inference API for this model. Generating a high-quality image sequence instead...');
-    
     try {
-        // For now, generate a single high-quality image
-        // In a real implementation, you'd want to use a video generation model
-        const base64Image = await generateImage(prompt, {
-            width: 1536,
-            height: 864,
-            num_inference_steps: 28,
+        setStatus('Generating video. This may take a few moments...');
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                inputs: prompt,
+                parameters: {},
+                options: {
+                    wait_for_model: true,
+                },
+            }),
         });
 
-        // Convert base64 to blob URL for compatibility
-        const byteCharacters = atob(base64Image);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Hugging Face API error: ${response.status} ${response.statusText} - ${errorText}`);
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'image/png' });
-        const videoUrl = URL.createObjectURL(blob);
+
+        setStatus('Processing video...');
         
-        setStatus('Note: Video generation returned an image. For full video support, consider using a video generation model.');
-        return videoUrl;
+        // Check content type
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType?.includes('application/json')) {
+            // JSON response with video data
+            const data = await response.json();
+            
+            // Handle different response formats
+            let videoData: string | null = null;
+            
+            if (data.video && typeof data.video === 'string') {
+                videoData = data.video;
+            } else if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
+                videoData = data[0];
+            } else if (typeof data === 'string') {
+                videoData = data;
+            }
+            
+            if (videoData) {
+                // Remove data URL prefix if present
+                const base64 = videoData.includes(',') ? videoData.split(',')[1] : videoData;
+                const byteCharacters = atob(base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'video/mp4' });
+                const videoUrl = URL.createObjectURL(blob);
+                
+                setStatus('Video generation complete!');
+                return videoUrl;
+            }
+        } else {
+            // Video blob response
+            const blob = await response.blob();
+            const videoUrl = URL.createObjectURL(blob);
+            
+            setStatus('Video generation complete!');
+            return videoUrl;
+        }
+        
+        throw new Error('Unexpected response format from video generation API');
     } catch (error: any) {
         setStatus('Video generation failed');
         throw new Error(`Failed to generate video: ${error?.message || 'Unknown error'}`);
