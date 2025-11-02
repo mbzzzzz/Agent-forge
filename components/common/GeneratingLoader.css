@@ -6,13 +6,18 @@
   justify-content: center;
   padding: 2rem;
   background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 10;
+  z-index: 50;
   pointer-events: none;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 .generating-loader-container {
@@ -29,6 +34,8 @@
   user-select: none;
   color: #fff;
   transform: scale(1.5);
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 .generating-loader {

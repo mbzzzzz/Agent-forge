@@ -351,14 +351,17 @@ export const generateSocialPost = async (platform: string, theme: string): Promi
 // Video Studio
 export const generateVideo = async (prompt: string, setStatus: (status: string) => void): Promise<string> => {
     const apiKey = getApiKey();
+    // Using Hugging Face Inference API for video generation
+    // Note: Wan2.2-TI2V-5B may require specific parameters
     const model = 'Wan-AI/Wan2.2-TI2V-5B';
     const url = `${HF_API_BASE}/${model}`;
     
     setStatus('Initializing video generation...');
     
     try {
-        setStatus('Generating video. This may take a few moments...');
+        setStatus('Generating video. This may take several minutes...');
         
+        // Wan2.2 model parameters based on documentation
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -367,16 +370,31 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
             },
             body: JSON.stringify({
                 inputs: prompt,
-                parameters: {},
+                parameters: {
+                    // Optional: add size parameter for 720P (1280x704 or 704x1280)
+                    // size: "1280x704", // Uncomment if model supports this parameter
+                },
                 options: {
                     wait_for_model: true,
+                    use_cache: false,
                 },
             }),
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Hugging Face API error: ${response.status} ${response.statusText} - ${errorText}`);
+            let errorMessage = `Hugging Face API error: ${response.status} ${response.statusText}`;
+            
+            // Provide helpful error messages
+            if (response.status === 503) {
+                errorMessage += '. Model is loading. Please wait a moment and try again.';
+            } else if (response.status === 404) {
+                errorMessage += '. Video generation may not be available via Inference API for this model. The model may require specialized inference code.';
+            } else {
+                errorMessage += ` - ${errorText}`;
+            }
+            
+            throw new Error(errorMessage);
         }
 
         setStatus('Processing video...');
@@ -385,7 +403,6 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
         const contentType = response.headers.get('content-type');
         
         if (contentType?.includes('application/json')) {
-            // JSON response with video data
             const data = await response.json();
             
             // Handle different response formats
@@ -393,6 +410,8 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
             
             if (data.video && typeof data.video === 'string') {
                 videoData = data.video;
+            } else if (data[0] && typeof data[0] === 'string') {
+                videoData = data[0];
             } else if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
                 videoData = data[0];
             } else if (typeof data === 'string') {
@@ -400,33 +419,52 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
             }
             
             if (videoData) {
-                // Remove data URL prefix if present
+                // Handle base64 or data URL
                 const base64 = videoData.includes(',') ? videoData.split(',')[1] : videoData;
-                const byteCharacters = atob(base64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                try {
+                    const byteCharacters = atob(base64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: 'video/mp4' });
+                    const videoUrl = URL.createObjectURL(blob);
+                    
+                    setStatus('Video generation complete!');
+                    return videoUrl;
+                } catch (decodeError) {
+                    throw new Error('Failed to decode video data. The response format may not be supported.');
                 }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: 'video/mp4' });
-                const videoUrl = URL.createObjectURL(blob);
-                
-                setStatus('Video generation complete!');
-                return videoUrl;
             }
+            
+            throw new Error('No video data found in API response. Response format: ' + JSON.stringify(data).substring(0, 200));
+        } else if (contentType?.includes('video/')) {
+            // Direct video blob response
+            const blob = await response.blob();
+            const videoUrl = URL.createObjectURL(blob);
+            
+            setStatus('Video generation complete!');
+            return videoUrl;
         } else {
-            // Video blob response
+            // Try to handle as blob anyway
             const blob = await response.blob();
             const videoUrl = URL.createObjectURL(blob);
             
             setStatus('Video generation complete!');
             return videoUrl;
         }
-        
-        throw new Error('Unexpected response format from video generation API');
     } catch (error: any) {
         setStatus('Video generation failed');
-        throw new Error(`Failed to generate video: ${error?.message || 'Unknown error'}`);
+        
+        // Provide helpful error message
+        if (error.message.includes('503') || error.message.includes('loading')) {
+            throw new Error('Model is still loading. Please wait a moment and try again. Large video models can take time to initialize.');
+        } else if (error.message.includes('404') || error.message.includes('not available')) {
+            throw new Error('Video generation via Inference API may not be available for this model. Please check if the model supports Inference API or requires specialized deployment.');
+        } else {
+            throw new Error(`Failed to generate video: ${error?.message || 'Unknown error'}`);
+        }
     }
 };
 
