@@ -1,38 +1,40 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Button from './common/Button';
 import { generateVideo } from '../services/huggingFaceService';
 import ApiKeySelector from './common/ApiKeySelector';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
+import { useApiKey } from '../hooks/useApiKey';
+import { useToastContext } from '../contexts/ToastContext';
+import { TooltipIcon } from './common/Tooltip';
+import { RotateCcw } from 'lucide-react';
 
 const VideoStudio: React.FC = () => {
+  const { isKeyAvailable, isChecking } = useApiKey();
+  const { showToast } = useToastContext();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('A cinematic shot of a coffee being poured in slow motion, with steam rising');
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
-  const [isKeySelected, setIsKeySelected] = useState(false);
-
-  useEffect(() => {
-    const checkApiKey = async () => {
-      const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-      setIsKeySelected(hasKey);
-    };
-    checkApiKey();
-
-    const handleKeyChange = () => checkApiKey();
-    window.addEventListener('aistudio_key_selected', handleKeyChange);
-    return () => {
-      window.removeEventListener('aistudio_key_selected', handleKeyChange);
-    };
-  }, []);
+  const savedInputsRef = useRef({ prompt });
+  
+  const MAX_PROMPT_LENGTH = 500;
 
   const handleGenerate = async () => {
-    if (!prompt) {
+    if (!prompt.trim()) {
       setError('Please enter a video prompt.');
       return;
     }
+    
+    if (prompt.trim().length < 10) {
+      setError('Video prompt must be at least 10 characters long.');
+      return;
+    }
+    
+    savedInputsRef.current = { prompt };
+    
     setIsLoading(true);
     setError(null);
     setGeneratedVideoUrl(null);
@@ -42,6 +44,7 @@ const VideoStudio: React.FC = () => {
       const url = await generateVideo(prompt, setStatus);
       console.log('Video generation successful, URL:', url);
       setGeneratedVideoUrl(url);
+      showToast('Video generated successfully!', 'success');
     } catch (e: any) {
       console.error('Video generation error:', e);
       const errorMessage = e?.message || e?.toString() || 'Unknown error occurred';
@@ -49,12 +52,10 @@ const VideoStudio: React.FC = () => {
       
       if (errorMessage.includes('Requested entity was not found') || errorMessage.includes('API key')) {
         setError("API Key validation failed. Please select your API key again.");
-        setIsKeySelected(false);
       } else if (errorMessage.includes('API key not found')) {
         setError("API key is required. Please select an API key.");
-        setIsKeySelected(false);
       } else {
-        const errorMsg = errorMessage.length > 100 
+        const errorMsg = errorMessage.length > 150 
           ? 'Failed to generate video. Please check your API key and try again.' 
           : errorMessage;
         setError(errorMsg);
@@ -64,24 +65,66 @@ const VideoStudio: React.FC = () => {
       setStatus('');
     }
   };
-
-  if (!isKeySelected) {
-    return <ApiKeySelector onKeySelected={() => setIsKeySelected(true)} />;
+  
+  const handleRegenerate = () => {
+    setGeneratedVideoUrl(null);
+    handleGenerate();
+  };
+  
+  if (isChecking) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-on-surface-variant">Checking API key...</div>
+      </div>
+    );
+  }
+  
+  if (!isKeyAvailable) {
+    return <ApiKeySelector onKeySelected={() => window.location.reload()} />;
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-lg">
-        <h3 className="text-xl font-bold font-display mb-4 text-on-surface">Video Concept</h3>
+        <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-xl font-bold font-display text-on-surface">Video Concept</h3>
+          <TooltipIcon content="Describe your video scene in detail. Include camera movements, style, mood, colors, and key visual elements for best results" />
+        </div>
         <p className="text-on-surface-variant mb-4">
           Describe the video you want to create. Be descriptive about the scene, camera movement, style, and mood.
         </p>
         <textarea
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., A neon hologram of a cat driving at top speed"
-          className="w-full bg-surface-variant/40 border border-outline/50 rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none mb-4 transition"
+          onChange={(e) => {
+            if (e.target.value.length <= MAX_PROMPT_LENGTH) {
+              setPrompt(e.target.value);
+              setError(null);
+            }
+          }}
+          placeholder="Example: A cinematic slow-motion shot of rich espresso coffee being poured into a white ceramic cup. Steam rises elegantly in the golden morning light. The camera slowly zooms in on the dark liquid, capturing the crema swirl. Warm, cozy atmosphere with soft focus and shallow depth of field. Professional food photography style."
+          maxLength={MAX_PROMPT_LENGTH}
+          aria-describedby="prompt-helper prompt-counter"
+          className={`w-full bg-surface-variant/40 border rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-32 resize-none mb-2 transition ${
+            error && error.includes('prompt') ? 'border-red-500/50' : 'border-outline/50'
+          } ${prompt.length >= MAX_PROMPT_LENGTH * 0.9 ? 'border-yellow-500/50' : ''}`}
         />
+        <div className="flex items-center justify-between mb-4">
+          <p id="prompt-helper" className="text-xs text-on-surface-variant/70">
+            Be specific: scene, camera movement, style, mood, and visual elements (min. 10 characters)
+          </p>
+          <p 
+            id="prompt-counter"
+            className={`text-xs ml-auto ${
+              prompt.length >= MAX_PROMPT_LENGTH 
+                ? 'text-red-400' 
+                : prompt.length >= MAX_PROMPT_LENGTH * 0.9 
+                ? 'text-yellow-400' 
+                : 'text-on-surface-variant/70'
+            }`}
+          >
+            {prompt.length}/{MAX_PROMPT_LENGTH}
+          </p>
+        </div>
         <Button onClick={handleGenerate} isLoading={isLoading} className="w-full">
           Generate Video
         </Button>
@@ -112,15 +155,25 @@ const VideoStudio: React.FC = () => {
                 <h3 className="text-lg font-bold">Generation Failed</h3>
               </div>
               <p className="text-sm">{error}</p>
-              <Button 
-                onClick={() => {
-                  setError(null);
-                  setGeneratedVideoUrl(null);
-                }}
-                className="mt-4 w-full"
-              >
-                Try Again
-              </Button>
+              <div className="flex gap-3 mt-4">
+                <Button 
+                  onClick={() => {
+                    setError(null);
+                    if (savedInputsRef.current.prompt) {
+                      setPrompt(savedInputsRef.current.prompt);
+                    }
+                  }}
+                  className="flex-1"
+                >
+                  Edit & Retry
+                </Button>
+                <Button 
+                  onClick={handleGenerate}
+                  className="flex-1"
+                >
+                  Try Again
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -135,14 +188,25 @@ const VideoStudio: React.FC = () => {
             </div>
         )}
         {generatedVideoUrl && (
-          <div className="w-full relative group">
-            <video controls autoPlay loop className="w-full rounded-md shadow-2xl">
-              <source src={generatedVideoUrl} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <DownloadAction dataUrl={generatedVideoUrl} filename="generated-video.mp4" />
-                <ShareAction dataUrl={generatedVideoUrl} filename="generated-video.mp4" title="AI Generated Video" />
+          <div className="w-full flex flex-col">
+            <div className="relative group mb-4">
+              <video controls autoPlay loop className="w-full rounded-md shadow-2xl">
+                <source src={generatedVideoUrl} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DownloadAction dataUrl={generatedVideoUrl} filename="generated-video.mp4" />
+                  <ShareAction dataUrl={generatedVideoUrl} filename="generated-video.mp4" title="AI Generated Video" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={handleRegenerate} variant="secondary" className="flex items-center gap-2">
+                <RotateCcw className="w-4 h-4" />
+                Regenerate
+              </Button>
+              <Button onClick={() => setGeneratedVideoUrl(null)} variant="secondary">
+                Edit & Generate New
+              </Button>
             </div>
           </div>
         )}

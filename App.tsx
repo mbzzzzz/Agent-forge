@@ -13,6 +13,8 @@ import { useAuth } from './AuthContext';
 import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
 import AgentForgeLogo from './components/common/AgentForgeLogo';
 import { ShaderAnimation } from './components/ui/shader-animation';
+import { ToastContainer } from './components/common/Toast';
+import { ToastProvider, useToastContext } from './contexts/ToastContext';
 
 
 interface AppContextType {
@@ -168,6 +170,7 @@ const Header: React.FC<{ module: CreativeModule }> = ({ module }) => {
 const Workspace: React.FC = () => {
   const [activeModuleId, setActiveModuleId] = useState<ModuleId>(ModuleId.BRAND_KIT);
   const [brandAccentColor, setBrandAccentColor] = useState<string>('#C3B6FF'); // Default primary color
+  const { toasts, removeToast } = useToastContext();
 
   const renderActiveModule = () => {
     switch (activeModuleId) {
@@ -203,6 +206,7 @@ const Workspace: React.FC = () => {
         <div className="absolute inset-0 z-[1] bg-gradient-to-br from-background/70 via-background/50 to-background/70 pointer-events-none"></div>
         
         <Sidebar activeModule={activeModuleId} setActiveModule={setActiveModuleId} />
+        <ToastContainer toasts={toasts} onClose={removeToast} />
         <main className="flex-1 flex flex-col z-10 min-w-0 relative">
           <div className="flex-1 overflow-y-auto px-8 pb-8 pt-6 relative z-10">
             <AnimatePresence mode="wait">
@@ -274,17 +278,19 @@ const App: React.FC = () => {
   }
 
   return (
-    <AnimatePresence mode="wait">
-      {user ? (
-        <motion.div key="workspace" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-          <Workspace />
-        </motion.div>
-      ) : (
-        <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-          <AuthScreen />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <ToastProvider>
+      <AnimatePresence mode="wait">
+        {user ? (
+          <motion.div key="workspace" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+            <Workspace />
+          </motion.div>
+        ) : (
+          <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+            <AuthScreen />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </ToastProvider>
   );
 };
 
