@@ -106,7 +106,7 @@ const MockupStudio: React.FC = () => {
             >
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-60"></div>
                 {isLoading && <Loader text="Generating photorealistic mockup..." />}
-                {!isLoading && !generatedImage && (
+                {!isLoading && !generatedImage && !error && (
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}

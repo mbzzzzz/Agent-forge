@@ -77,7 +77,7 @@ const Sidebar: React.FC<{
         ))}
       </nav>
       <div className="mt-auto text-center text-on-surface-variant/40 text-xs px-4 pb-4 border-t border-outline/20 pt-4">
-        <p>Powered by Google AI</p>
+        <p>Powered by Hugging Face</p>
         <p className="mt-1">Built with Supabase</p>
       </div>
     </aside>
