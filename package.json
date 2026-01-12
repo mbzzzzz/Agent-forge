@@ -24,6 +24,7 @@
     "@types/jszip": "^3.4.0",
     "@types/three": "^0.181.0",
     "framer-motion": "^11.3.19",
+    "groq-sdk": "^0.37.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.417.0",
     "react": "^19.2.0",

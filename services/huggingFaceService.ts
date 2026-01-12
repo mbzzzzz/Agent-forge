@@ -1,5 +1,6 @@
 import { BrandIdentity, ColorPalette, Typography, BrandCampaign, CarouselPost, CampaignInput } from "../types";
 import { InferenceClient } from "@huggingface/inference";
+import { generateText as generateGroqText } from "./groqService";
 
 const getApiKey = (): string => {
   const hfToken = process.env.HF_TOKEN;
@@ -98,35 +99,9 @@ function cleanGeneratedText(text: string): string {
   return cleaned;
 }
 
-// Helper function for text generation
-async function generateText(prompt: string, model: string = 'mistralai/Mistral-7B-Instruct-v0.2', maxTokens: number = 2000): Promise<string> {
-  const client = getHfClient();
-
-  console.log('Text generation request:', { model, promptLength: prompt.length });
-
-  try {
-    const response = await client.textGeneration({
-      model: model,
-      inputs: prompt,
-      parameters: {
-        return_full_text: false,
-        max_new_tokens: maxTokens,
-        temperature: 0.7,
-        top_p: 0.9,
-        repetition_penalty: 1.1,
-      },
-    });
-
-    const generatedText = response.generated_text;
-    console.log('Text generation response received');
-    return cleanGeneratedText(generatedText);
-  } catch (error: any) {
-    console.error('Text generation error:', error);
-    if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-      throw new Error('Network error: Unable to connect to Hugging Face API. Please check your internet connection and try again.');
-    }
-    throw error;
-  }
+// Helper function for text generation - NOW USING GROQ
+async function generateText(prompt: string, model: string = 'llama3-70b-8192', maxTokens: number = 2000): Promise<string> {
+  return generateGroqText(prompt, model, maxTokens);
 }
 
 // Prompt enhancement function based on use case
