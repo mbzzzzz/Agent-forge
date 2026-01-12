@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends HTMLMotionProps<"button"> {
   isLoading?: boolean;
-  variant?: 'primary' | 'secondary' | 'ghost'; // Added ghost
-  size?: 'sm' | 'md' | 'lg'; // Added size
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
 }
 

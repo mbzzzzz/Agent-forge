@@ -49,8 +49,8 @@ const Sidebar: React.FC<{
           <AgentForgeLogo className="w-3.5 h-3.5" />
         </motion.div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-sm font-bold font-display text-on-surface leading-tight">AgentForge</h1>
-          <p className="text-[9px] text-on-surface-variant/70 leading-tight">Creative Studio</p>
+          <div className="text-4xl font-bold font-display text-on-surface leading-none tracking-tight">AgentForge</div>
+          <div className="text-[10px] text-on-surface-variant/70 leading-tight mt-1 uppercase tracking-wider font-semibold">Creative Studio</div>
         </div>
       </div>
       <nav className="flex flex-col gap-2">
