@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import Button from './common/Button';
 import Input from './common/Input';
-import { Mail, KeyRound, LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus } from 'lucide-react';
 import iconImage from '../assets/icon.png';
 import { ShaderAnimation } from './ui/shader-animation';
 
@@ -43,7 +43,6 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
                 placeholder="email@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                leftIcon={<Mail className="w-5 h-5" />}
                 required
             />
             <Input
@@ -51,7 +50,6 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
                 placeholder="Password (min 6 characters)"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                leftIcon={<KeyRound className="w-5 h-5" />}
                 required
                 minLength={6}
             />
@@ -111,9 +109,9 @@ const AuthScreen: React.FC = () => {
                             className="inline-block mb-6"
                         >
                             <div className="bg-primary/20 p-4 rounded-2xl inline-block border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)]">
-                                <img 
-                                    src={iconImage} 
-                                    alt="AgentForge" 
+                                <img
+                                    src={iconImage}
+                                    alt="AgentForge"
                                     className="w-12 h-12 object-contain"
                                 />
                             </div>
@@ -182,7 +180,7 @@ const AuthScreen: React.FC = () => {
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         ) : (
-                        <GoogleIcon />
+                            <GoogleIcon />
                         )}
                         <span>Continue with Google</span>
                     </button>
