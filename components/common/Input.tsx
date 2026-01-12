@@ -45,11 +45,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={hasError}
             aria-required={required}
             maxLength={maxLength}
-            className={`w-full bg-surface-variant/30 border rounded-xl py-3 text-white placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface-variant/50 transition-all duration-200 backdrop-blur-sm ${hasError
+            className={`w-full bg-surface-variant/20 border rounded-xl py-3.5 text-white placeholder-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 focus:bg-surface-variant/40 transition-all duration-300 backdrop-blur-md ${hasError
                 ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50'
-                : 'border-outline/40 hover:border-outline/60'
-              } ${maxLength && currentLength >= maxLength * 0.9 ? 'border-yellow-500/50' : ''} ${leftIcon ? 'pl-11' : 'pl-4'
-              } ${rightIcon ? 'pr-11' : 'pr-4'} ${className}`}
+                : 'border-outline/30 hover:border-outline/50'
+              } ${maxLength && currentLength >= maxLength * 0.9 ? 'border-yellow-500/50' : ''} ${leftIcon ? 'pl-12' : 'pl-4'
+              } ${rightIcon ? 'pr-12' : 'pr-4'} ${className}`}
             {...props}
           />
           {rightIcon && (

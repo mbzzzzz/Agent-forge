@@ -54,12 +54,23 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
                 required
                 minLength={6}
             />
-            <Button type="submit" isLoading={loading} className="w-full mt-2" disabled={loading}>
-                {isSignUp ? <><UserPlus className="w-5 h-5" /> Sign Up</> : <><LogIn className="w-5 h-5" /> Sign In</>}
+            <Button type="submit" isLoading={loading} className="w-full mt-4 flex items-center justify-center gap-2 py-4 text-base" disabled={loading}>
+                {isSignUp ? (
+                    <>
+                        <UserPlus className="w-5 h-5" />
+                        <span>Sign Up</span>
+                    </>
+                ) : (
+                    <>
+                        <LogIn className="w-5 h-5" />
+                        <span>Sign In</span>
+                    </>
+                )}
             </Button>
         </form>
     );
 };
+
 
 
 const AuthScreen: React.FC = () => {
@@ -91,49 +102,50 @@ const AuthScreen: React.FC = () => {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full blur-2xl -z-10"></div>
 
-                    <div className="text-center mb-8 relative z-10">
+                    <div className="text-center mb-10 relative z-10">
                         <motion.div
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="inline-block mb-4"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.2, type: 'spring' }}
+                            className="inline-block mb-6"
                         >
-                            <div className="bg-primary/20 p-3 rounded-xl inline-block border border-primary/20 shadow-inner">
+                            <div className="bg-primary/20 p-4 rounded-2xl inline-block border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)]">
                                 <Bot className="w-10 h-10 text-primary" />
                             </div>
                         </motion.div>
-                        <h1 className="text-4xl font-bold font-display text-on-surface mb-2 tracking-tight">
+                        <h1 className="text-4xl font-bold font-display text-on-surface mb-3 tracking-tight">
                             AgentForge
                         </h1>
-                        <p className="text-on-surface-variant text-sm font-medium">
-                            {isSignUp ? 'Create your creative workspace' : 'Sign in to your dashboard'}
+                        <p className="text-on-surface-variant/80 text-sm font-medium">
+                            {isSignUp ? 'Create your creative workspace' : 'Sign in to your AI dashboard'}
                         </p>
                     </div>
 
-                    <div className="flex items-center bg-white/5 rounded-xl p-1 mb-6 border border-white/10 relative z-10">
+                    <div className="flex items-center bg-white/5 rounded-2xl p-1.5 mb-8 border border-white/10 relative z-10">
                         <motion.div
                             layoutId="auth-tab"
-                            className="absolute inset-y-1 bg-primary rounded-lg shadow-lg z-0"
+                            className="absolute inset-y-1.5 bg-primary rounded-xl shadow-lg z-0"
                             initial={false}
                             animate={{
-                                left: isSignUp ? '50%' : '4px',
-                                right: isSignUp ? '4px' : '50%'
+                                left: isSignUp ? '50%' : '6px',
+                                right: isSignUp ? '6px' : '50%'
                             }}
                             transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
                         <button
                             onClick={() => setIsSignUp(false)}
-                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-bold text-sm transition-colors duration-200 ${!isSignUp ? 'text-white' : 'text-on-surface-variant hover:text-on-surface'}`}
+                            className={`relative z-10 w-1/2 py-2.5 rounded-xl font-bold text-sm transition-colors duration-200 ${!isSignUp ? 'text-white' : 'text-on-surface-variant hover:text-on-surface'}`}
                         >
                             Sign In
                         </button>
                         <button
                             onClick={() => setIsSignUp(true)}
-                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-bold text-sm transition-colors duration-200 ${isSignUp ? 'text-white' : 'text-on-surface-variant hover:text-on-surface'}`}
+                            className={`relative z-10 w-1/2 py-2.5 rounded-xl font-bold text-sm transition-colors duration-200 ${isSignUp ? 'text-white' : 'text-on-surface-variant hover:text-on-surface'}`}
                         >
                             Sign Up
                         </button>
                     </div>
+
 
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -158,12 +170,13 @@ const AuthScreen: React.FC = () => {
                         onClick={loginWithGoogle}
                         isLoading={loading}
                         variant="secondary"
-                        className="w-full relative z-10 py-3 font-bold border-white/5 hover:bg-white/10 transition-all"
+                        className="w-full relative z-10 py-4 font-bold border-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-3 text-base"
                         disabled={loading}
                     >
                         <GoogleIcon />
-                        Continue with Google
+                        <span>Continue with Google</span>
                     </Button>
+
 
                     <AnimatePresence>
                         {error && (
