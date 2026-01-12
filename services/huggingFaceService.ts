@@ -72,6 +72,45 @@ async function generateText(prompt: string, model: string = 'meta-llama/Meta-Lla
   throw new Error('Unexpected response format from text generation API');
 }
 
+// Prompt enhancement function based on use case
+function enhancePromptForUseCase(
+  prompt: string,
+  useCase: 'logo' | 'mockup' | 'poster' | 'social' | 'carousel' | 'brand-asset' | 'general'
+): string {
+  const baseEnhancements = '8k hyper realistic graphics, ultra high quality, highly detailed, professional, cinematic lighting, sharp focus, masterpiece, best quality';
+  
+  const useCaseEnhancements: Record<string, string> = {
+    'logo': 'clean vector-style design, scalable, professional branding, minimalist, high contrast, crisp edges, transparent background, commercial quality',
+    'mockup': 'photorealistic product photography, professional studio lighting, sharp focus, depth of field, commercial quality, product showcase, high resolution',
+    'poster': 'dynamic typography, vibrant colors, strong visual hierarchy, print-ready quality, eye-catching composition, professional design, high resolution',
+    'social': 'lifestyle photography, engaging composition, vibrant colors, authentic feel, social media optimized, high engagement visual, professional quality',
+    'carousel': 'consistent brand aesthetic, cohesive visual style, professional photography, high quality, brand-aligned, engaging visual content',
+    'brand-asset': 'perfectly centered, clear and legible, professional branding, high quality, scalable design, commercial use ready',
+    'general': 'hyper realistic, photorealistic, stunning visuals, professional photography, cinematic quality'
+  };
+
+  const enhancement = useCaseEnhancements[useCase] || useCaseEnhancements['general'];
+  return `${prompt}, ${baseEnhancements}, ${enhancement}`;
+}
+
+// Enhanced negative prompt function based on use case
+function getNegativePromptForUseCase(useCase: 'logo' | 'mockup' | 'poster' | 'social' | 'carousel' | 'brand-asset' | 'general'): string {
+  const baseNegative = 'blurry, low quality, distorted, ugly, bad anatomy, deformed, disfigured, poorly drawn, bad proportions, extra limbs, cloned face, mutated, out of focus, underexposed, oversaturated, pixelated, jpeg artifacts';
+  
+  const useCaseNegatives: Record<string, string> = {
+    'logo': 'text in logo unless wordmark, cluttered, busy design, low resolution, pixelated, blurry edges',
+    'mockup': 'unrealistic shadows, poor lighting, distorted perspective, low quality, blurry, unprofessional',
+    'poster': 'poor typography, cluttered layout, low resolution, unreadable text, amateur design',
+    'social': 'unengaging, low quality, blurry, unprofessional, poor composition, low resolution',
+    'carousel': 'inconsistent style, low quality, blurry, unprofessional, mismatched colors',
+    'brand-asset': 'off-center, unclear, low resolution, blurry, unprofessional, pixelated',
+    'general': 'low quality, blurry, distorted, unprofessional'
+  };
+
+  const specificNegative = useCaseNegatives[useCase] || useCaseNegatives['general'];
+  return `${baseNegative}, ${specificNegative}`;
+}
+
 // Helper function for image generation
 async function generateImage(
   prompt: string,
@@ -80,15 +119,17 @@ async function generateImage(
     height?: number;
     num_inference_steps?: number;
     negative_prompt?: string;
+    useCase?: 'logo' | 'mockup' | 'poster' | 'social' | 'carousel' | 'brand-asset' | 'general';
   }
 ): Promise<string> {
   const apiKey = getApiKey();
   // Using Flux Schnell for fast, high-quality image generation via Inference API
   const model = 'black-forest-labs/FLUX.1-schnell';
 
-  // Add positive magic prompt enhancement for better quality
-  const enhancedPrompt = prompt + ', ultra high quality, detailed, professional, 4k, 8k';
-  const negativePrompt = options?.negative_prompt || 'blurry, low quality, distorted, ugly, bad anatomy';
+  // Enhanced prompt with use-case specific improvements
+  const useCase = options?.useCase || 'general';
+  const enhancedPrompt = enhancePromptForUseCase(prompt, useCase);
+  const negativePrompt = options?.negative_prompt || getNegativePromptForUseCase(useCase);
 
   // Flux supports various aspect ratios, standard dimensions
   const aspectRatios: Record<string, [number, number]> = {
@@ -212,13 +253,14 @@ export const generateBrandIdentity = async (businessInfo: string): Promise<Brand
 
 export const generateLogo = async (brandName: string, industry: string, style: string): Promise<string> => {
   console.log('Generating logo for:', brandName, industry, style);
-  const prompt = `Professional logo design for ${brandName}, a ${industry} company. Style: ${style}. Clean, scalable vector-style design on a transparent background. No text unless it is part of a wordmark. High quality, commercial use.`;
+  const prompt = `Professional logo design for ${brandName}, a ${industry} company. Style: ${style}. Clean, scalable vector-style design on a transparent background. No text unless it is part of a wordmark.`;
 
   try {
     const base64Image = await generateImage(prompt, {
       width: 1024,
       height: 1024,
       num_inference_steps: 30,
+      useCase: 'logo',
     });
 
     console.log('Logo generated successfully');
@@ -287,6 +329,7 @@ export const generateBrandAsset = async (logoImageBase64: string, assetType: 'Fa
       width: 1024,
       height: 1024,
       num_inference_steps: 30,
+      useCase: 'brand-asset',
     });
 
     console.log('Brand asset generated:', assetType);
@@ -299,12 +342,13 @@ export const generateBrandAsset = async (logoImageBase64: string, assetType: 'Fa
 
 // Mockup Studio
 export const generateMockup = async (mockupType: string, designDescription: string): Promise<string> => {
-  const prompt = `Photorealistic product mockup: a ${mockupType} displaying "${designDescription}". Environment: modern minimalist desk setup. Lighting: soft natural daylight. Angle: 45-degree angle view. Style: professional product photography, sharp focus, high resolution, commercial quality. Background: blurred office interior.`;
+  const prompt = `Photorealistic product mockup: a ${mockupType} displaying "${designDescription}". Environment: modern minimalist desk setup. Lighting: soft natural daylight. Angle: 45-degree angle view. Background: blurred office interior.`;
 
   const base64Image = await generateImage(prompt, {
     width: 1536,
     height: 864,
     num_inference_steps: 28,
+    useCase: 'mockup',
   });
 
   return base64Image;
@@ -312,12 +356,13 @@ export const generateMockup = async (mockupType: string, designDescription: stri
 
 // Poster Studio
 export const generatePoster = async (posterType: string, theme: string): Promise<string> => {
-  const prompt = `Professional poster design for a ${posterType}. Theme: ${theme}. Visual style: Modern and vibrant with dynamic typography. Composition: Strong visual hierarchy, eye-catching. Mood: Energetic and exciting. High quality print-ready design, 18x24 inches aspect ratio.`;
+  const prompt = `Professional poster design for a ${posterType}. Theme: ${theme}. Visual style: Modern and vibrant with dynamic typography. Composition: Strong visual hierarchy, eye-catching. Mood: Energetic and exciting. Print-ready design, 18x24 inches aspect ratio.`;
 
   const base64Image = await generateImage(prompt, {
     width: 1280,
     height: 1024,
     num_inference_steps: 28,
+    useCase: 'poster',
   });
 
   return base64Image;
@@ -325,7 +370,7 @@ export const generatePoster = async (posterType: string, theme: string): Promise
 
 // Social Media Studio
 export const generateSocialPost = async (platform: string, theme: string): Promise<{ image: string, caption: string, hashtags: string }> => {
-  const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring. Professional, high-quality image.`;
+  const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring.`;
 
   const aspectRatio = platform === 'Instagram Stories' ? '9:16' : '1:1';
   const dimensions = aspectRatio === '9:16' ? { width: 864, height: 1536 } : { width: 1024, height: 1024 };
@@ -333,6 +378,7 @@ export const generateSocialPost = async (platform: string, theme: string): Promi
   const imageBase64 = await generateImage(imagePrompt, {
     ...dimensions,
     num_inference_steps: 28,
+    useCase: 'social',
   });
 
   const captionPrompt = `You are a Social Media Copywriter. Write an engaging ${platform} caption for a post about "${theme}". Include a strong hook, provide value, and end with a call-to-action. Return only the caption text, no additional formatting.`;
@@ -411,13 +457,14 @@ export const generateCarouselPost = async (campaign: BrandCampaign, theme: strin
 
   // 2. Generate Images for each slide
   const slidesWithImages = await Promise.all(contentData.slides.map(async (slide: any, index: number) => {
-    const imagePrompt = `Instagram carousel slide ${index + 1}. ${slide.imageDescription}. Style: consistent brand aesthetic, high quality, professional photography or illustration.`;
+    const imagePrompt = `Instagram carousel slide ${index + 1}. ${slide.imageDescription}. Style: consistent brand aesthetic, professional photography or illustration.`;
 
     try {
       const imageBase64 = await generateImage(imagePrompt, {
         width: 1024,
         height: 1024,
         num_inference_steps: 25, // Slightly lower steps for batch speed
+        useCase: 'carousel',
       });
       return {
         image: imageBase64,
@@ -453,6 +500,9 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
   try {
     setStatus('Generating video. This may take several minutes...');
 
+    // Enhanced video prompt with quality terms
+    const enhancedVideoPrompt = `${prompt}, 8k hyper realistic graphics, ultra high quality, highly detailed, cinematic, professional videography, smooth motion, realistic lighting, sharp focus, masterpiece quality, best quality video`;
+
     // Wan2.2 model parameters based on documentation
     const response = await fetch(url, {
       method: 'POST',
@@ -461,7 +511,7 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        inputs: prompt,
+        inputs: enhancedVideoPrompt,
         parameters: {
           // Optional: add size parameter for 720P (1280x704 or 704x1280)
           // size: "1280x704", // Uncomment if model supports this parameter
