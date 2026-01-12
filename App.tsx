@@ -3,7 +3,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ModuleId, CreativeModule } from './types';
 import { CREATIVE_MODULES } from './constants';
 import BrandKitStudio from './components/BrandKitStudio';
+import BrandCampaignStudio from './components/BrandCampaignStudio';
 import MockupStudio from './components/MockupStudio';
+
 import PosterStudio from './components/PosterStudio';
 import SocialMediaStudio from './components/SocialMediaStudio';
 import VideoStudio from './components/VideoStudio';
@@ -38,9 +40,9 @@ const Sidebar: React.FC<{
     <aside className="w-80 bg-glass backdrop-blur-[var(--glass-blur)] border-r border-white/10 p-6 flex flex-col z-10 shrink-0 shadow-2xl relative">
       {/* Gradient accent */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
-      
+
       <div className="flex items-center gap-2 mb-6 px-2 pt-1">
-        <motion.div 
+        <motion.div
           whileHover={{ scale: 1.03 }}
           className="bg-gradient-to-br from-primary to-secondary p-1 rounded-md shadow-sm shrink-0"
         >
@@ -56,11 +58,10 @@ const Sidebar: React.FC<{
           <button
             key={module.id}
             onClick={() => setActiveModule(module.id)}
-            className={`relative flex items-center gap-4 px-4 py-3 rounded-xl text-left transition-all duration-200 group ${
-              activeModule === module.id
-                ? 'text-on-primary-container'
-                : 'text-on-surface-variant hover:bg-white/5 hover:text-on-surface'
-            }`}
+            className={`relative flex items-center gap-4 px-4 py-3 rounded-xl text-left transition-all duration-200 group ${activeModule === module.id
+              ? 'text-on-primary-container'
+              : 'text-on-surface-variant hover:bg-white/5 hover:text-on-surface'
+              }`}
           >
             {activeModule === module.id && (
               <motion.div
@@ -73,8 +74,8 @@ const Sidebar: React.FC<{
               />
             )}
             <div className="relative z-10 flex items-center gap-4">
-               <module.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${activeModule === module.id ? 'scale-110' : ''}`} />
-               <span className="font-semibold">{module.name}</span>
+              <module.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${activeModule === module.id ? 'scale-110' : ''}`} />
+              <span className="font-semibold">{module.name}</span>
             </div>
           </button>
         ))}
@@ -91,23 +92,23 @@ const UserMenu: React.FC = () => {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-        if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-            setIsOpen(false);
-        }
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  
+
   if (!user) return null;
 
   return (
     <div className="relative" ref={menuRef}>
-      <motion.button 
-        onClick={() => setIsOpen(!isOpen)} 
+      <motion.button
+        onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         className="flex items-center gap-3 bg-glass backdrop-blur-sm p-2 rounded-xl border border-outline/30 hover:border-primary/50 transition-all shadow-lg hover:shadow-xl"
@@ -121,27 +122,27 @@ const UserMenu: React.FC = () => {
 
       <AnimatePresence>
         {isOpen && (
-           <motion.div 
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="absolute top-full right-0 mt-2 w-56 bg-glass backdrop-blur-[var(--glass-blur)] border border-outline/30 rounded-xl shadow-2xl z-50 overflow-hidden"
-           >
-              <div className="p-2">
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-primary-container/50 hover:text-on-primary-container rounded-lg transition-all duration-200 group">
-                  <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-                  Settings
-                </button>
-                <button 
-                  onClick={logout} 
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all duration-200 group"
-                >
-                  <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                  Logout
-                </button>
-              </div>
-           </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute top-full right-0 mt-2 w-56 bg-glass backdrop-blur-[var(--glass-blur)] border border-outline/30 rounded-xl shadow-2xl z-50 overflow-hidden"
+          >
+            <div className="p-2">
+              <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-primary-container/50 hover:text-on-primary-container rounded-lg transition-all duration-200 group">
+                <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                Settings
+              </button>
+              <button
+                onClick={logout}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all duration-200 group"
+              >
+                <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                Logout
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -175,6 +176,7 @@ const Workspace: React.FC = () => {
   const renderActiveModule = () => {
     switch (activeModuleId) {
       case ModuleId.BRAND_KIT: return <BrandKitStudio />;
+      case ModuleId.CAMPAIGN: return <BrandCampaignStudio />;
       case ModuleId.MOCKUP: return <MockupStudio />;
       case ModuleId.POSTER: return <PosterStudio />;
       case ModuleId.SOCIAL: return <SocialMediaStudio />;
@@ -182,7 +184,7 @@ const Workspace: React.FC = () => {
       default: return null;
     }
   };
-  
+
   const activeModule = CREATIVE_MODULES.find(m => m.id === activeModuleId)!;
 
   return (
@@ -192,19 +194,19 @@ const Workspace: React.FC = () => {
         <div className="absolute inset-0 z-0">
           <ShaderAnimation intensity={0.5} speed={0.7} />
         </div>
-        
+
         {/* Dynamic background gradient based on brand color - layered over shader */}
-        <div 
+        <div
           className="absolute inset-0 z-[1] transition-all duration-1000 mix-blend-overlay"
           style={{
             background: `radial-gradient(circle at 15% 25%, ${brandAccentColor}25 0%, transparent 50%),
                         radial-gradient(circle at 85% 75%, ${brandAccentColor}15 0%, transparent 40%)`
           }}
         />
-        
+
         {/* Additional subtle overlay for depth */}
         <div className="absolute inset-0 z-[1] bg-gradient-to-br from-background/70 via-background/50 to-background/70 pointer-events-none"></div>
-        
+
         <Sidebar activeModule={activeModuleId} setActiveModule={setActiveModuleId} />
         <ToastContainer toasts={toasts} onClose={removeToast} />
         <main className="flex-1 flex flex-col z-10 min-w-0 relative">
@@ -250,7 +252,7 @@ const App: React.FC = () => {
 
     // Listen to popstate for browser back/forward
     window.addEventListener('popstate', handleLocationChange);
-    
+
     // Also check on initial load and when hash changes (for OAuth callbacks)
     handleLocationChange();
 
@@ -264,7 +266,7 @@ const App: React.FC = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const hasAuthCode = urlParams.has('code') || window.location.hash.includes('access_token') || window.location.hash.includes('code');
   const isCallbackRoute = currentPath === '/auth/callback' || (hasAuthCode && !loading);
-  
+
   if (isCallbackRoute) {
     return <AuthCallback />;
   }

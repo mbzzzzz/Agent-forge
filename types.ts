@@ -9,11 +9,13 @@ export interface User {
 
 export enum ModuleId {
   BRAND_KIT = "brand_kit_studio",
+  CAMPAIGN = "brand_campaign_studio",
   MOCKUP = "product_mockup_studio",
   POSTER = "poster_design_studio",
   SOCIAL = "social_media_studio",
   VIDEO = "video_studio",
 }
+
 
 export interface CreativeModule {
   id: ModuleId;
@@ -56,4 +58,29 @@ export interface BrandAsset {
   name: string;
   src: string;
   dimensions: string;
+}
+
+export interface BrandCampaign {
+  id: string; // Added ID for selection
+  title: string;
+  description: string;
+  objective: string;
+  targetAudience: string;
+  keyMessage: string;
+}
+
+export interface CampaignInput {
+  brandName: string;
+  tone: string;
+  targetAudience: string;
+  products: string;
+}
+
+export interface CarouselPost {
+  slides: {
+    image: string;
+    caption: string;
+  }[];
+  caption: string;
+  hashtags: string;
 }

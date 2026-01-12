@@ -6,11 +6,13 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
+  message: string | null;
   login: (email: string, pass: string) => Promise<void>;
   signup: (email: string, pass: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  clearMessage: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,10 +21,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    
+
     // Helper function to map session to user
     const mapSessionToUser = (session: any): User | null => {
       if (!session?.user) return null;
@@ -37,9 +40,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Set up auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
-      
+
       if (!isMounted) return;
-      
+
       const mappedUser = mapSessionToUser(session);
       setUser(mappedUser);
       setLoading(false);
@@ -48,14 +51,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Get initial session
     supabase.auth.getSession().then(({ data, error }) => {
       if (!isMounted) return;
-      
+
       if (error) {
         console.error('Error getting initial session:', error);
         setUser(null);
         setLoading(false);
         return;
       }
-      
+
       const session = data.session;
       console.log('Initial session:', session?.user?.email || 'No session');
       const mappedUser = mapSessionToUser(session);
@@ -72,11 +75,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, pass: string) => {
     setLoading(true);
     setError(null);
+    setMessage(null);
     console.log('🔐 Attempting login for:', email);
     try {
       const { error, data } = await supabase.auth.signInWithPassword({ email, password: pass });
       console.log('Login response:', { error: error?.message, hasSession: !!data?.session, hasUser: !!data?.session?.user });
-      
+
       if (error) {
         const errorMessage = error.message || 'Failed to sign in. Please check your credentials.';
         setError(errorMessage);
@@ -84,7 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
         return;
       }
-      
+
       // Set user immediately if session exists to avoid redirect delay
       // The onAuthStateChange listener will also fire and confirm/update the state
       if (data?.session?.user) {
@@ -129,30 +133,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signup = async (email: string, pass: string) => {
     setLoading(true);
     setError(null);
+    setMessage(null);
     console.log('📝 Attempting signup for:', email);
-    
+
     try {
       if (pass.length < 6) {
         setError('Password must be at least 6 characters long.');
         setLoading(false);
         return;
       }
-      
-      const { error, data } = await supabase.auth.signUp({ 
-        email, 
+
+      const { error, data } = await supabase.auth.signUp({
+        email,
         password: pass,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`
         }
       });
-      
-      console.log('Signup response:', { 
-        error: error?.message, 
-        hasUser: !!data?.user, 
+
+      console.log('Signup response:', {
+        error: error?.message,
+        hasUser: !!data?.user,
         hasSession: !!data?.session,
         needsEmailConfirmation: !!data?.user && !data?.session
       });
-      
+
       if (error) {
         const errorMessage = error.message || 'Failed to create account. Please try again.';
         setError(errorMessage);
@@ -160,7 +165,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
         return;
       }
-      
+
       if (data?.user && data?.session) {
         // Signup successful and session created (email confirmation might be disabled)
         console.log('✅ Signup successful with session, user:', data.user.email);
@@ -175,44 +180,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } else if (data?.user && !data.session) {
         // User created but needs email confirmation
         console.log('📧 User created, email confirmation required');
-        // Auto-confirm email in background (for development/testing)
-        // In production, user should confirm via email
-        setTimeout(async () => {
-          try {
-            // Try to get session after a delay - sometimes Supabase processes it
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const { data: sessionData } = await supabase.auth.getSession();
-            if (sessionData?.session?.user) {
-              console.log('✅ Session created after email confirmation processing');
-              const mapped: User = {
-                uid: sessionData.session.user.id,
-                email: sessionData.session.user.email ?? null,
-                displayName: sessionData.session.user.user_metadata?.full_name ?? sessionData.session.user.user_metadata?.name ?? null,
-                photoURL: sessionData.session.user.user_metadata?.avatar_url ?? sessionData.session.user.user_metadata?.picture ?? null,
-              };
-              setUser(mapped);
-            }
-          } catch (err) {
-            console.log('ℹ️ Email confirmation required - user needs to confirm email or try logging in');
-          }
-        }, 0);
-        setError('Account created! Please check your email to confirm, or try logging in.');
+
+        // Removed auto-login/auto-confirm hack for production safety
+        // Prompt user to check email instead
+        setMessage('Account created! Please check your email to confirm your account before logging in.');
         setLoading(false);
       } else {
-        // Wait a moment and check for session
-        console.log('⏳ No user/session in response, checking stored session...');
+        // Fallback check
+        console.log('⏳ checking session...');
         await new Promise(resolve => setTimeout(resolve, 500));
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('❌ Error getting session:', sessionError);
-          setError('Account created but session error. Please try logging in.');
-          setLoading(false);
-          return;
-        }
-        
+        const { data: sessionData } = await supabase.auth.getSession();
+
         if (sessionData.session?.user) {
-          console.log('✅ Session found after wait, user:', sessionData.session.user.email);
+          // ... (existing logic for session found) ...
           const mapped: User = {
             uid: sessionData.session.user.id,
             email: sessionData.session.user.email ?? null,
@@ -221,8 +201,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           };
           setUser(mapped);
         } else {
-          console.log('ℹ️ No session found, user may need to confirm email');
-          setError('Account created! Please check your email to confirm your account.');
+          setMessage('Account created! Please check your email to confirm your account.');
         }
         setLoading(false);
       }
@@ -233,22 +212,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
     }
   };
-  
+
   const loginWithGoogle = async () => {
     setLoading(true);
     setError(null);
+    setMessage(null);
     console.log('🔐 Attempting Google OAuth login');
     try {
       const redirectUrl = `${window.location.origin}/auth/callback`;
       console.log('OAuth redirect URL:', redirectUrl);
-      
-      const { error, data } = await supabase.auth.signInWithOAuth({ 
+
+      const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl
         }
       });
-      
+
       if (error) {
         const errorMessage = error.message || 'Failed to sign in with Google. Please try again.';
         setError(errorMessage);
@@ -256,8 +236,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(false);
       } else {
         console.log('✅ OAuth redirect initiated, redirecting to Google...');
-        // Note: OAuth redirects to Google, so loading will be handled by auth state change
-        // Don't set loading to false here as the redirect will happen
       }
     } catch (err: any) {
       const errorMessage = err?.message || 'An unexpected error occurred. Please try again.';
@@ -277,8 +255,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const clearError = () => setError(null);
+  const clearMessage = () => setMessage(null);
 
-  const value = { user, loading, error, login, signup, loginWithGoogle, logout, clearError };
+  const value = { user, loading, error, message, login, signup, loginWithGoogle, logout, clearError, clearMessage };
 
   return (
     <AuthContext.Provider value={value}>

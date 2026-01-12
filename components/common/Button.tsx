@@ -4,34 +4,43 @@ import { motion } from 'framer-motion';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'ghost'; // Added ghost
+  size?: 'sm' | 'md' | 'lg'; // Added size
   children: React.ReactNode;
 }
 
-const Button: React.FC<ButtonProps> = ({ isLoading = false, variant = 'primary', children, className = '', ...props }) => {
-  const baseClasses = "flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background shadow-lg hover:shadow-xl min-h-[44px]"; // min-h for touch targets
-  const variantClasses = {
-    primary: 'bg-primary text-on-primary hover:bg-primary/90 focus:ring-primary hover:scale-[1.02] active:scale-[0.98]',
-    secondary: 'bg-surface-variant/80 backdrop-blur-sm text-on-surface-variant border border-outline/30 hover:bg-surface-variant focus:ring-secondary hover:scale-[1.02] active:scale-[0.98]',
+const Button: React.FC<ButtonProps> = ({ isLoading = false, variant = 'primary', size = 'md', children, className = '', ...props }) => {
+  const baseClasses = "flex items-center justify-center gap-2 font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:bg-surface-variant/50 disabled:cursor-not-allowed disabled:text-on-surface-variant/50 disabled:shadow-none disabled:hover:scale-100 disabled:opacity-60";
+
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-xs min-h-[32px]',
+    md: 'px-6 py-3 min-h-[44px]',
+    lg: 'px-8 py-4 text-lg min-h-[52px]'
   };
-  const disabledClasses = "disabled:bg-surface-variant/50 disabled:cursor-not-allowed disabled:text-on-surface-variant/50 disabled:shadow-none disabled:hover:scale-100 disabled:opacity-60";
+
+  const variantClasses = {
+    primary: 'bg-primary text-on-primary hover:bg-primary/90 focus:ring-primary shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]',
+    secondary: 'bg-surface-variant/80 backdrop-blur-sm text-on-surface-variant border border-outline/30 hover:bg-surface-variant focus:ring-secondary shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]',
+    ghost: 'bg-transparent text-on-surface-variant hover:bg-white/5 hover:text-on-surface focus:ring-primary/50 shadow-none hover:shadow-none' // Added ghost style
+  };
 
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
-      whileHover={isLoading ? {} : { scale: 1.03 }}
+      whileHover={isLoading ? {} : { scale: variant === 'ghost' ? 1 : 1.03 }}
       transition={{ type: "spring", stiffness: 400, damping: 15 }}
-      className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className}`}
+      className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
       disabled={isLoading || props.disabled}
+
       aria-busy={isLoading}
       aria-disabled={isLoading || props.disabled}
       {...props}
     >
       {isLoading && (
-        <svg 
-          className="animate-spin -ml-1 mr-3 h-5 w-5" 
-          xmlns="http://www.w3.org/2000/svg" 
-          fill="none" 
+        <svg
+          className="animate-spin -ml-1 mr-3 h-5 w-5"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
           viewBox="0 0 24 24"
           aria-hidden="true"
         >

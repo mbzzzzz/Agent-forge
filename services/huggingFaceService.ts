@@ -1,4 +1,4 @@
-import { BrandIdentity, ColorPalette, Typography } from "../types";
+import { BrandIdentity, ColorPalette, Typography, BrandCampaign, CarouselPost, CampaignInput } from "../types";
 
 // Get API key from window.aistudio if available, otherwise fall back to process.env
 const getApiKey = (): string => {
@@ -11,11 +11,11 @@ const getApiKey = (): string => {
       console.warn('Could not get API key from window.aistudio:', e);
     }
   }
-  
+
   // Fall back to process.env.API_KEY (set via vite.config.ts)
   const envKey = process.env.API_KEY || process.env.HF_TOKEN;
   if (envKey) return envKey;
-  
+
   throw new Error('API key not found. Please select an API key or set HF_TOKEN environment variable.');
 };
 
@@ -25,7 +25,7 @@ const HF_API_BASE = 'https://api-inference.huggingface.co/models';
 async function generateText(prompt: string, model: string = 'meta-llama/Meta-Llama-3.1-8B-Instruct'): Promise<string> {
   const apiKey = getApiKey();
   const url = `${HF_API_BASE}/${model}`;
-  
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -60,7 +60,7 @@ async function generateText(prompt: string, model: string = 'meta-llama/Meta-Lla
       return data[0].generated_text;
     }
   }
-  
+
   if (typeof data === 'object' && 'generated_text' in data) {
     return data.generated_text;
   }
@@ -85,7 +85,7 @@ async function generateImage(
   const apiKey = getApiKey();
   // Using Flux Schnell for fast, high-quality image generation via Inference API
   const model = 'black-forest-labs/FLUX.1-schnell';
-  
+
   // Add positive magic prompt enhancement for better quality
   const enhancedPrompt = prompt + ', ultra high quality, detailed, professional, 4k, 8k';
   const negativePrompt = options?.negative_prompt || 'blurry, low quality, distorted, ugly, bad anatomy';
@@ -104,12 +104,12 @@ async function generateImage(
   // Determine aspect ratio from dimensions
   let width = options?.width || 1536;
   let height = options?.height || 864;
-  
+
   // Find closest matching aspect ratio
   const ratio = width / height;
   let closestRatio: [number, number] | null = null;
   let minDiff = Infinity;
-  
+
   for (const [_, dims] of Object.entries(aspectRatios)) {
     const diff = Math.abs((dims[0] / dims[1]) - ratio);
     if (diff < minDiff) {
@@ -123,7 +123,7 @@ async function generateImage(
   }
 
   const url = `${HF_API_BASE}/${model}`;
-  
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -152,7 +152,7 @@ async function generateImage(
 
   // Check content type to determine response format
   const contentType = response.headers.get('content-type');
-  
+
   if (contentType?.includes('application/json')) {
     // JSON response with base64 image
     const data = await response.json();
@@ -169,7 +169,7 @@ async function generateImage(
   } else {
     // Image blob response
     const blob = await response.blob();
-    
+
     // Convert blob to base64
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -198,11 +198,11 @@ export const generateBrandIdentity = async (businessInfo: string): Promise<Brand
   try {
     const text = await generateText(prompt);
     console.log('Brand identity response received');
-    
+
     // Try to extract JSON from the response (in case model wraps it in markdown)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const jsonText = jsonMatch ? jsonMatch[0] : text;
-    
+
     return JSON.parse(jsonText) as BrandIdentity;
   } catch (error: any) {
     console.error('Error generating brand identity:', error);
@@ -211,260 +211,352 @@ export const generateBrandIdentity = async (businessInfo: string): Promise<Brand
 };
 
 export const generateLogo = async (brandName: string, industry: string, style: string): Promise<string> => {
-    console.log('Generating logo for:', brandName, industry, style);
-    const prompt = `Professional logo design for ${brandName}, a ${industry} company. Style: ${style}. Clean, scalable vector-style design on a transparent background. No text unless it is part of a wordmark. High quality, commercial use.`;
+  console.log('Generating logo for:', brandName, industry, style);
+  const prompt = `Professional logo design for ${brandName}, a ${industry} company. Style: ${style}. Clean, scalable vector-style design on a transparent background. No text unless it is part of a wordmark. High quality, commercial use.`;
 
-    try {
-        const base64Image = await generateImage(prompt, {
-            width: 1024,
-            height: 1024,
-            num_inference_steps: 30,
-        });
+  try {
+    const base64Image = await generateImage(prompt, {
+      width: 1024,
+      height: 1024,
+      num_inference_steps: 30,
+    });
 
-        console.log('Logo generated successfully');
-        return base64Image;
-    } catch (error: any) {
-        console.error('Error generating logo:', error);
-        throw new Error(`Failed to generate logo: ${error?.message || 'Unknown error'}`);
-    }
+    console.log('Logo generated successfully');
+    return base64Image;
+  } catch (error: any) {
+    console.error('Error generating logo:', error);
+    throw new Error(`Failed to generate logo: ${error?.message || 'Unknown error'}`);
+  }
 };
 
 export const generateColorPalette = async (brandInfo: string): Promise<ColorPalette> => {
-    console.log('Generating color palette for:', brandInfo);
-    const prompt = `As a Brand Strategist, create a color palette for a brand described as: "${brandInfo}". 
+  console.log('Generating color palette for:', brandInfo);
+  const prompt = `As a Brand Strategist, create a color palette for a brand described as: "${brandInfo}". 
     Provide 2 primary colors, 3 secondary, 2 accent, and 2 neutral colors.
     Return a JSON object with keys: "primary", "secondary", "accent", "neutral". Each key should be an array of HEX color codes.
     Return ONLY valid JSON, no markdown formatting.`;
-    
-    try {
-        const text = await generateText(prompt);
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const jsonText = jsonMatch ? jsonMatch[0] : text;
-        
-        const parsed = JSON.parse(jsonText) as ColorPalette;
-        console.log('Color palette generated');
-        return parsed;
-    } catch (error: any) {
-        console.error('Error generating color palette:', error);
-        throw new Error(`Failed to generate color palette: ${error?.message || 'Unknown error'}`);
-    }
+
+  try {
+    const text = await generateText(prompt);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonText = jsonMatch ? jsonMatch[0] : text;
+
+    const parsed = JSON.parse(jsonText) as ColorPalette;
+    console.log('Color palette generated');
+    return parsed;
+  } catch (error: any) {
+    console.error('Error generating color palette:', error);
+    throw new Error(`Failed to generate color palette: ${error?.message || 'Unknown error'}`);
+  }
 };
 
 export const generateTypography = async (brandPersonality: string): Promise<Typography> => {
-    console.log('Generating typography for:', brandPersonality);
-    const prompt = `You are a Typography Specialist. Based on a brand's personality, described as "${brandPersonality}", recommend a font pairing from Google Fonts.
+  console.log('Generating typography for:', brandPersonality);
+  const prompt = `You are a Typography Specialist. Based on a brand's personality, described as "${brandPersonality}", recommend a font pairing from Google Fonts.
     Provide:
     1. A "headingFont" (e.g., "Poppins").
     2. A "bodyFont" (e.g., "Lato").
     3. A short paragraph of "guidelines" for their usage (e.g., font weights, sizing ratios).
     Return ONLY a valid JSON object with the keys "headingFont", "bodyFont", and "guidelines".
     Return ONLY valid JSON, no markdown formatting.`;
-    
-    try {
-        const text = await generateText(prompt);
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const jsonText = jsonMatch ? jsonMatch[0] : text;
-        
-        const parsed = JSON.parse(jsonText) as Typography;
-        console.log('Typography generated');
-        return parsed;
-    } catch (error: any) {
-        console.error('Error generating typography:', error);
-        throw new Error(`Failed to generate typography: ${error?.message || 'Unknown error'}`);
-    }
+
+  try {
+    const text = await generateText(prompt);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonText = jsonMatch ? jsonMatch[0] : text;
+
+    const parsed = JSON.parse(jsonText) as Typography;
+    console.log('Typography generated');
+    return parsed;
+  } catch (error: any) {
+    console.error('Error generating typography:', error);
+    throw new Error(`Failed to generate typography: ${error?.message || 'Unknown error'}`);
+  }
 };
 
 export const generateBrandAsset = async (logoImageBase64: string, assetType: 'Favicon' | 'Profile Picture'): Promise<string> => {
-    console.log('Generating brand asset:', assetType);
-    // Note: Hugging Face Inference API doesn't support image-to-image directly
-    // We'll use image generation with a description instead
-    const promptText = assetType === 'Favicon'
-      ? `Convert this logo into a perfectly centered 1:1 aspect ratio favicon. Ensure it is clear and legible at 32x32 pixels. The background must be transparent.`
-      : `Convert this logo into a perfectly centered 1:1 aspect ratio social media profile picture. The design should be bold and fill the frame, suitable for a circular crop. The background must be transparent.`;
+  console.log('Generating brand asset:', assetType);
+  // Note: Hugging Face Inference API doesn't support image-to-image directly
+  // We'll use image generation with a description instead
+  const promptText = assetType === 'Favicon'
+    ? `Convert this logo into a perfectly centered 1:1 aspect ratio favicon. Ensure it is clear and legible at 32x32 pixels. The background must be transparent.`
+    : `Convert this logo into a perfectly centered 1:1 aspect ratio social media profile picture. The design should be bold and fill the frame, suitable for a circular crop. The background must be transparent.`;
 
-    try {
-        const base64Image = await generateImage(promptText, {
-            width: 1024,
-            height: 1024,
-            num_inference_steps: 30,
-        });
+  try {
+    const base64Image = await generateImage(promptText, {
+      width: 1024,
+      height: 1024,
+      num_inference_steps: 30,
+    });
 
-        console.log('Brand asset generated:', assetType);
-        return base64Image;
-    } catch (error: any) {
-        console.error(`Error generating ${assetType}:`, error);
-        throw new Error(`Failed to generate ${assetType}: ${error?.message || 'Unknown error'}`);
-    }
+    console.log('Brand asset generated:', assetType);
+    return base64Image;
+  } catch (error: any) {
+    console.error(`Error generating ${assetType}:`, error);
+    throw new Error(`Failed to generate ${assetType}: ${error?.message || 'Unknown error'}`);
+  }
 };
 
 // Mockup Studio
 export const generateMockup = async (mockupType: string, designDescription: string): Promise<string> => {
-    const prompt = `Photorealistic product mockup: a ${mockupType} displaying "${designDescription}". Environment: modern minimalist desk setup. Lighting: soft natural daylight. Angle: 45-degree angle view. Style: professional product photography, sharp focus, high resolution, commercial quality. Background: blurred office interior.`;
+  const prompt = `Photorealistic product mockup: a ${mockupType} displaying "${designDescription}". Environment: modern minimalist desk setup. Lighting: soft natural daylight. Angle: 45-degree angle view. Style: professional product photography, sharp focus, high resolution, commercial quality. Background: blurred office interior.`;
 
-    const base64Image = await generateImage(prompt, {
-        width: 1536,
-        height: 864,
-        num_inference_steps: 28,
-    });
+  const base64Image = await generateImage(prompt, {
+    width: 1536,
+    height: 864,
+    num_inference_steps: 28,
+  });
 
-    return base64Image;
+  return base64Image;
 };
 
 // Poster Studio
 export const generatePoster = async (posterType: string, theme: string): Promise<string> => {
-    const prompt = `Professional poster design for a ${posterType}. Theme: ${theme}. Visual style: Modern and vibrant with dynamic typography. Composition: Strong visual hierarchy, eye-catching. Mood: Energetic and exciting. High quality print-ready design, 18x24 inches aspect ratio.`;
-    
-    const base64Image = await generateImage(prompt, {
-        width: 1280,
-        height: 1024,
-        num_inference_steps: 28,
-    });
+  const prompt = `Professional poster design for a ${posterType}. Theme: ${theme}. Visual style: Modern and vibrant with dynamic typography. Composition: Strong visual hierarchy, eye-catching. Mood: Energetic and exciting. High quality print-ready design, 18x24 inches aspect ratio.`;
 
-    return base64Image;
+  const base64Image = await generateImage(prompt, {
+    width: 1280,
+    height: 1024,
+    num_inference_steps: 28,
+  });
+
+  return base64Image;
 };
 
 // Social Media Studio
 export const generateSocialPost = async (platform: string, theme: string): Promise<{ image: string, caption: string, hashtags: string }> => {
-    const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring. Professional, high-quality image.`;
+  const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring. Professional, high-quality image.`;
+
+  const aspectRatio = platform === 'Instagram Stories' ? '9:16' : '1:1';
+  const dimensions = aspectRatio === '9:16' ? { width: 864, height: 1536 } : { width: 1024, height: 1024 };
+
+  const imageBase64 = await generateImage(imagePrompt, {
+    ...dimensions,
+    num_inference_steps: 28,
+  });
+
+  const captionPrompt = `You are a Social Media Copywriter. Write an engaging ${platform} caption for a post about "${theme}". Include a strong hook, provide value, and end with a call-to-action. Return only the caption text, no additional formatting.`;
+  const caption = await generateText(captionPrompt);
+
+  const hashtagPrompt = `You are a Hashtag Specialist. Generate a mix of 10 relevant hashtags for a ${platform} post about "${theme}". Mix high-volume, medium-volume, and niche hashtags. Return only the hashtags separated by spaces, no additional text.`;
+  const hashtags = await generateText(hashtagPrompt);
+
+  return {
+    image: imageBase64,
+    caption: caption.trim(),
+    hashtags: hashtags.trim(),
+  };
+};
+
+// Brand Campaign Studio
+export const generateCampaignIdeas = async (input: CampaignInput): Promise<BrandCampaign[]> => {
+  console.log('Generating campaign ideas for:', input);
+  const prompt = `You are a Senior Marketing Strategist. Create 5 distinct marketing campaign concepts for:
+    Brand: "${input.brandName}"
+    Tone: "${input.tone}"
+    Target Audience: "${input.targetAudience}"
+    Products: "${input.products}"
+
+    For each campaign, provide:
+    1. A catchy "title".
+    2. A short "description".
+    3. The main "objective".
+    4. The specific "targetAudience" segment.
+    5. The "keyMessage".
+
+    Return ONLY a valid JSON array of objects, where each object has keys: "title", "description", "objective", "targetAudience", "keyMessage".
+    Return ONLY valid JSON, no markdown formatting.`;
+
+  try {
+    const text = await generateText(prompt);
+    // Try to extract JSON from the response
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    const jsonText = jsonMatch ? jsonMatch[0] : text;
+
+    const campaigns = JSON.parse(jsonText);
+
+    // Add IDs to campaigns
+    return campaigns.map((c: any, index: number) => ({
+      ...c,
+      id: `campaign-${Date.now()}-${index}`
+    }));
+  } catch (error: any) {
+    console.error('Error generating campaign ideas:', error);
+    throw new Error(`Failed to generate campaign ideas: ${error?.message || 'Unknown error'}`);
+  }
+};
+
+export const generateCarouselPost = async (campaign: BrandCampaign, theme: string): Promise<CarouselPost> => {
+  console.log('Generating carousel post for campaign:', campaign.title);
+
+  // 1. Generate Content Structure
+  const contentPrompt = `Create a 5-slide Instagram carousel post for the campaign "${campaign.title}" with the theme "${theme}".
+    Key Message: "${campaign.keyMessage}"
     
-    const aspectRatio = platform === 'Instagram Stories' ? '9:16' : '1:1';
-    const dimensions = aspectRatio === '9:16' ? { width: 864, height: 1536 } : { width: 1024, height: 1024 };
-    
-    const imageBase64 = await generateImage(imagePrompt, {
-        ...dimensions,
-        num_inference_steps: 28,
-    });
+    Return a valid JSON object with:
+    1. "slides": An array of 5 objects, each with "imageDescription" (for AI generation) and "caption" (text overlay or caption).
+    2. "mainCaption": The post caption.
+    3. "hashtags": A string of hashtags.
+    Return ONLY valid JSON.`;
 
-    const captionPrompt = `You are a Social Media Copywriter. Write an engaging ${platform} caption for a post about "${theme}". Include a strong hook, provide value, and end with a call-to-action. Return only the caption text, no additional formatting.`;
-    const caption = await generateText(captionPrompt);
+  let contentData;
+  try {
+    const text = await generateText(contentPrompt);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonText = jsonMatch ? jsonMatch[0] : text;
+    contentData = JSON.parse(jsonText);
+  } catch (e) {
+    throw new Error("Failed to generate carousel content structure");
+  }
 
-    const hashtagPrompt = `You are a Hashtag Specialist. Generate a mix of 10 relevant hashtags for a ${platform} post about "${theme}". Mix high-volume, medium-volume, and niche hashtags. Return only the hashtags separated by spaces, no additional text.`;
-    const hashtags = await generateText(hashtagPrompt);
+  // 2. Generate Images for each slide
+  const slidesWithImages = await Promise.all(contentData.slides.map(async (slide: any, index: number) => {
+    const imagePrompt = `Instagram carousel slide ${index + 1}. ${slide.imageDescription}. Style: consistent brand aesthetic, high quality, professional photography or illustration.`;
 
-    return {
+    try {
+      const imageBase64 = await generateImage(imagePrompt, {
+        width: 1024,
+        height: 1024,
+        num_inference_steps: 25, // Slightly lower steps for batch speed
+      });
+      return {
         image: imageBase64,
-        caption: caption.trim(),
-        hashtags: hashtags.trim(),
-    };
+        caption: slide.caption
+      };
+    } catch (e) {
+      console.error(`Failed to generate image for slide ${index}`, e);
+      // Return placeholder or failed state
+      return {
+        image: '', // Handle empty image in UI
+        caption: slide.caption
+      };
+    }
+  }));
+
+  return {
+    slides: slidesWithImages,
+    caption: contentData.mainCaption,
+    hashtags: contentData.hashtags
+  };
 };
 
 // Video Studio
 export const generateVideo = async (prompt: string, setStatus: (status: string) => void): Promise<string> => {
-    const apiKey = getApiKey();
-    // Using Hugging Face Inference API for video generation
-    // Note: Wan2.2-TI2V-5B may require specific parameters
-    const model = 'Wan-AI/Wan2.2-TI2V-5B';
-    const url = `${HF_API_BASE}/${model}`;
-    
-    setStatus('Initializing video generation...');
-    
-    try {
-        setStatus('Generating video. This may take several minutes...');
-        
-        // Wan2.2 model parameters based on documentation
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                inputs: prompt,
-                parameters: {
-                    // Optional: add size parameter for 720P (1280x704 or 704x1280)
-                    // size: "1280x704", // Uncomment if model supports this parameter
-                },
-                options: {
-                    wait_for_model: true,
-                    use_cache: false,
-                },
-            }),
-        });
+  const apiKey = getApiKey();
+  // Using Hugging Face Inference API for video generation
+  // Using damo-vilab/text-to-video-ms-1.7b for more reliable free generation
+  const model = 'damo-vilab/text-to-video-ms-1.7b';
+  const url = `${HF_API_BASE}/${model}`;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            let errorMessage = `Hugging Face API error: ${response.status} ${response.statusText}`;
-            
-            // Provide helpful error messages
-            if (response.status === 503) {
-                errorMessage += '. Model is loading. Please wait a moment and try again.';
-            } else if (response.status === 404) {
-                errorMessage += '. Video generation may not be available via Inference API for this model. The model may require specialized inference code.';
-            } else {
-                errorMessage += ` - ${errorText}`;
-            }
-            
-            throw new Error(errorMessage);
-        }
+  setStatus('Initializing video generation...');
 
-        setStatus('Processing video...');
-        
-        // Check content type
-        const contentType = response.headers.get('content-type');
-        
-        if (contentType?.includes('application/json')) {
-            const data = await response.json();
-            
-            // Handle different response formats
-            let videoData: string | null = null;
-            
-            if (data.video && typeof data.video === 'string') {
-                videoData = data.video;
-            } else if (data[0] && typeof data[0] === 'string') {
-                videoData = data[0];
-            } else if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
-                videoData = data[0];
-            } else if (typeof data === 'string') {
-                videoData = data;
-            }
-            
-            if (videoData) {
-                // Handle base64 or data URL
-                const base64 = videoData.includes(',') ? videoData.split(',')[1] : videoData;
-                try {
-                    const byteCharacters = atob(base64);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                        byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray], { type: 'video/mp4' });
-                    const videoUrl = URL.createObjectURL(blob);
-                    
-                    setStatus('Video generation complete!');
-                    return videoUrl;
-                } catch (decodeError) {
-                    throw new Error('Failed to decode video data. The response format may not be supported.');
-                }
-            }
-            
-            throw new Error('No video data found in API response. Response format: ' + JSON.stringify(data).substring(0, 200));
-        } else if (contentType?.includes('video/')) {
-            // Direct video blob response
-            const blob = await response.blob();
-            const videoUrl = URL.createObjectURL(blob);
-            
-            setStatus('Video generation complete!');
-            return videoUrl;
-        } else {
-            // Try to handle as blob anyway
-            const blob = await response.blob();
-            const videoUrl = URL.createObjectURL(blob);
-            
-            setStatus('Video generation complete!');
-            return videoUrl;
-        }
-    } catch (error: any) {
-        setStatus('Video generation failed');
-        
-        // Provide helpful error message
-        if (error.message.includes('503') || error.message.includes('loading')) {
-            throw new Error('Model is still loading. Please wait a moment and try again. Large video models can take time to initialize.');
-        } else if (error.message.includes('404') || error.message.includes('not available')) {
-            throw new Error('Video generation via Inference API may not be available for this model. Please check if the model supports Inference API or requires specialized deployment.');
-        } else {
-            throw new Error(`Failed to generate video: ${error?.message || 'Unknown error'}`);
-        }
+  try {
+    setStatus('Generating video. This may take several minutes...');
+
+    // Wan2.2 model parameters based on documentation
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          // Optional: add size parameter for 720P (1280x704 or 704x1280)
+          // size: "1280x704", // Uncomment if model supports this parameter
+        },
+        options: {
+          wait_for_model: true,
+          use_cache: false,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `Hugging Face API error: ${response.status} ${response.statusText}`;
+
+      // Provide helpful error messages
+      if (response.status === 503) {
+        errorMessage += '. Model is loading. Please wait a moment and try again.';
+      } else if (response.status === 404) {
+        errorMessage += '. Video generation may not be available via Inference API for this model. The model may require specialized inference code.';
+      } else {
+        errorMessage += ` - ${errorText}`;
+      }
+
+      throw new Error(errorMessage);
     }
+
+    setStatus('Processing video...');
+
+    // Check content type
+    const contentType = response.headers.get('content-type');
+
+    if (contentType?.includes('application/json')) {
+      const data = await response.json();
+
+      // Handle different response formats
+      let videoData: string | null = null;
+
+      if (data.video && typeof data.video === 'string') {
+        videoData = data.video;
+      } else if (data[0] && typeof data[0] === 'string') {
+        videoData = data[0];
+      } else if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
+        videoData = data[0];
+      } else if (typeof data === 'string') {
+        videoData = data;
+      }
+
+      if (videoData) {
+        // Handle base64 or data URL
+        const base64 = videoData.includes(',') ? videoData.split(',')[1] : videoData;
+        try {
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'video/mp4' });
+          const videoUrl = URL.createObjectURL(blob);
+
+          setStatus('Video generation complete!');
+          return videoUrl;
+        } catch (decodeError) {
+          throw new Error('Failed to decode video data. The response format may not be supported.');
+        }
+      }
+
+      throw new Error('No video data found in API response. Response format: ' + JSON.stringify(data).substring(0, 200));
+    } else if (contentType?.includes('video/')) {
+      // Direct video blob response
+      const blob = await response.blob();
+      const videoUrl = URL.createObjectURL(blob);
+
+      setStatus('Video generation complete!');
+      return videoUrl;
+    } else {
+      // Try to handle as blob anyway
+      const blob = await response.blob();
+      const videoUrl = URL.createObjectURL(blob);
+
+      setStatus('Video generation complete!');
+      return videoUrl;
+    }
+  } catch (error: any) {
+    setStatus('Video generation failed');
+
+    // Provide helpful error message
+    if (error.message.includes('503') || error.message.includes('loading')) {
+      throw new Error('Model is still loading. Please wait a moment and try again. Large video models can take time to initialize.');
+    } else if (error.message.includes('404') || error.message.includes('not available')) {
+      throw new Error('Video generation via Inference API may not be available for this model. Please check if the model supports Inference API or requires specialized deployment.');
+    } else {
+      throw new Error(`Failed to generate video: ${error?.message || 'Unknown error'}`);
+    }
+  }
 };
 

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Button from './common/Button';
 import { generateVideo } from '../services/huggingFaceService';
@@ -7,8 +6,7 @@ import ApiKeySelector from './common/ApiKeySelector';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 import { useApiKey } from '../hooks/useApiKey';
 import { useToastContext } from '../contexts/ToastContext';
-import { TooltipIcon } from './common/Tooltip';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Sparkles, Video } from 'lucide-react';
 
 const VideoStudio: React.FC = () => {
   const { isKeyAvailable, isChecking } = useApiKey();
@@ -19,7 +17,7 @@ const VideoStudio: React.FC = () => {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string>('');
   const savedInputsRef = useRef({ prompt });
-  
+
   const MAX_PROMPT_LENGTH = 500;
 
   const handleGenerate = async () => {
@@ -27,18 +25,19 @@ const VideoStudio: React.FC = () => {
       setError('Please enter a video prompt.');
       return;
     }
-    
+
     if (prompt.trim().length < 10) {
       setError('Video prompt must be at least 10 characters long.');
       return;
     }
-    
+
     savedInputsRef.current = { prompt };
-    
+
     setIsLoading(true);
     setError(null);
     setGeneratedVideoUrl(null);
-    setStatus('');
+    setStatus('Initializing generation...');
+
     try {
       console.log('Starting video generation with prompt:', prompt);
       const url = await generateVideo(prompt, setStatus);
@@ -48,168 +47,143 @@ const VideoStudio: React.FC = () => {
     } catch (e: any) {
       console.error('Video generation error:', e);
       const errorMessage = e?.message || e?.toString() || 'Unknown error occurred';
-      console.error('Error details:', { message: errorMessage, error: e });
-      
       if (errorMessage.includes('Requested entity was not found') || errorMessage.includes('API key')) {
         setError("API Key validation failed. Please select your API key again.");
-      } else if (errorMessage.includes('API key not found')) {
-        setError("API key is required. Please select an API key.");
       } else {
-        const errorMsg = errorMessage.length > 150 
-          ? 'Failed to generate video. Please check your API key and try again.' 
-          : errorMessage;
-        setError(errorMsg);
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false);
       setStatus('');
     }
   };
-  
+
   const handleRegenerate = () => {
     setGeneratedVideoUrl(null);
     handleGenerate();
   };
-  
+
   if (isChecking) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-on-surface-variant">Checking API key...</div>
+        <div className="text-on-surface-variant animate-pulse">Checking API key...</div>
       </div>
     );
   }
-  
+
   if (!isKeyAvailable) {
     return <ApiKeySelector onKeySelected={() => window.location.reload()} />;
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-xl font-bold font-display text-on-surface">Video Concept</h3>
-          <TooltipIcon content="Describe your video scene in detail. Include camera movements, style, mood, colors, and key visual elements for best results" />
-        </div>
-        <p className="text-on-surface-variant mb-4">
-          Describe the video you want to create. Be descriptive about the scene, camera movement, style, and mood.
-        </p>
-        <textarea
-          value={prompt}
-          onChange={(e) => {
-            if (e.target.value.length <= MAX_PROMPT_LENGTH) {
-              setPrompt(e.target.value);
-              setError(null);
-            }
-          }}
-          placeholder="Example: A cinematic slow-motion shot of rich espresso coffee being poured into a white ceramic cup. Steam rises elegantly in the golden morning light. The camera slowly zooms in on the dark liquid, capturing the crema swirl. Warm, cozy atmosphere with soft focus and shallow depth of field. Professional food photography style."
-          maxLength={MAX_PROMPT_LENGTH}
-          aria-describedby="prompt-helper prompt-counter"
-          className={`w-full bg-surface-variant/40 border rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-32 resize-none mb-2 transition ${
-            error && error.includes('prompt') ? 'border-red-500/50' : 'border-outline/50'
-          } ${prompt.length >= MAX_PROMPT_LENGTH * 0.9 ? 'border-yellow-500/50' : ''}`}
-        />
-        <div className="flex items-center justify-between mb-4">
-          <p id="prompt-helper" className="text-xs text-on-surface-variant/70">
-            Be specific: scene, camera movement, style, mood, and visual elements (min. 10 characters)
-          </p>
-          <p 
-            id="prompt-counter"
-            className={`text-xs ml-auto ${
-              prompt.length >= MAX_PROMPT_LENGTH 
-                ? 'text-red-400' 
-                : prompt.length >= MAX_PROMPT_LENGTH * 0.9 
-                ? 'text-yellow-400' 
-                : 'text-on-surface-variant/70'
-            }`}
-          >
-            {prompt.length}/{MAX_PROMPT_LENGTH}
-          </p>
-        </div>
-        <Button onClick={handleGenerate} isLoading={isLoading} className="w-full">
-          Generate Video
-        </Button>
-      </div>
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Input Section */}
+        <div className="space-y-6">
+          <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Video className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold font-display text-on-surface">Video Request</h3>
+            </div>
 
-      <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-lg min-h-[400px] flex items-center justify-center">
-        {isLoading && (
-          <div className="text-center">
-             <div className="flex flex-col items-center justify-center gap-4 p-8 rounded-lg">
-                <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p className="text-lg font-semibold text-on-surface-variant animate-pulse">{status || "Initializing..."}</p>
-                <p className="text-sm text-on-surface-variant/70">Video generation may take several minutes.</p>
-            </div>
-          </div>
-        )}
-        {!isLoading && error && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute inset-0 flex items-center justify-center z-50"
-          >
-            <div className="bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-6 rounded-xl shadow-2xl max-w-md mx-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-                <h3 className="text-lg font-bold">Generation Failed</h3>
-              </div>
-              <p className="text-sm">{error}</p>
-              <div className="flex gap-3 mt-4">
-                <Button 
-                  onClick={() => {
+            <div className="relative">
+              <textarea
+                value={prompt}
+                onChange={(e) => {
+                  if (e.target.value.length <= MAX_PROMPT_LENGTH) {
+                    setPrompt(e.target.value);
                     setError(null);
-                    if (savedInputsRef.current.prompt) {
-                      setPrompt(savedInputsRef.current.prompt);
-                    }
-                  }}
-                  className="flex-1"
-                >
-                  Edit & Retry
-                </Button>
-                <Button 
-                  onClick={handleGenerate}
-                  className="flex-1"
-                >
-                  Try Again
-                </Button>
+                  }
+                }}
+                placeholder="Describe your scene: A futuristic city with flying cars at sunset..."
+                maxLength={MAX_PROMPT_LENGTH}
+                className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-4 text-white placeholder-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary h-48 resize-none transition-all duration-200 ${error ? 'border-red-500/50 focus:ring-red-500' : 'border-outline/30 focus:border-primary'
+                  }`}
+              />
+              <div className="absolute bottom-3 right-3 text-xs text-on-surface-variant/60 bg-surface/50 px-2 py-1 rounded-md backdrop-blur-sm">
+                {prompt.length}/{MAX_PROMPT_LENGTH}
               </div>
             </div>
-          </motion.div>
-        )}
-        {!isLoading && !generatedVideoUrl && !error && (
-            <div className="text-center text-on-surface-variant/70">
-                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-24 h-24 mx-auto mb-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
-                </svg>
-                <h3 className="text-xl font-semibold font-display">Your video will appear here</h3>
-                <p>Describe your scene and click "Generate Video"</p>
-            </div>
-        )}
-        {generatedVideoUrl && (
-          <div className="w-full flex flex-col">
-            <div className="relative group mb-4">
-              <video controls autoPlay loop className="w-full rounded-md shadow-2xl">
-                <source src={generatedVideoUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <DownloadAction dataUrl={generatedVideoUrl} filename="generated-video.mp4" />
-                  <ShareAction dataUrl={generatedVideoUrl} filename="generated-video.mp4" title="AI Generated Video" />
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={handleRegenerate} variant="secondary" className="flex items-center gap-2">
-                <RotateCcw className="w-4 h-4" />
-                Regenerate
-              </Button>
-              <Button onClick={() => setGeneratedVideoUrl(null)} variant="secondary">
-                Edit & Generate New
+
+            <div className="mt-6">
+              <Button
+                onClick={handleGenerate}
+                isLoading={isLoading}
+                className="w-full h-12 text-lg font-medium shadow-lg hover:shadow-primary/25 transition-all"
+                disabled={isLoading}
+              >
+                {!isLoading && <Sparkles className="w-5 h-5 mr-2" />}
+                {isLoading ? 'Creating Magic...' : 'Generate Video'}
               </Button>
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Output Section */}
+        <div className="relative h-full min-h-[400px]">
+          <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-2xl h-full shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className="absolute inset-0 z-20 bg-surface/80 backdrop-blur-md flex flex-col items-center justify-center text-center p-8">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full mb-6"
+                />
+                <h4 className="text-xl font-semibold mb-2 text-on-surface">{status || "Processing..."}</h4>
+                <p className="text-on-surface-variant text-sm max-w-xs">Connecting to GPU cluster...</p>
+              </div>
+            )}
+
+            {/* Error State */}
+            {!isLoading && error && (
+              <div className="text-center p-6 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <p className="text-red-400 mb-4">{error}</p>
+                <Button onClick={handleGenerate} variant="secondary" size="sm">Try Again</Button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && !generatedVideoUrl && !error && (
+              <div className="text-center opacity-60">
+                <div className="w-20 h-20 bg-surface-variant/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Video className="w-10 h-10 text-on-surface-variant" />
+                </div>
+                <h3 className="text-lg font-medium text-on-surface mb-1">Ready to create</h3>
+                <p className="text-sm text-on-surface-variant">Your generated video will appear here</p>
+              </div>
+            )}
+
+            {/* Success State */}
+            {generatedVideoUrl && !isLoading && (
+              <div className="w-full h-full flex flex-col">
+                <div className="relative rounded-xl overflow-hidden shadow-2xl flex-grow bg-black aspect-video group">
+                  <video
+                    controls
+                    autoPlay
+                    loop
+                    className="w-full h-full object-contain"
+                    src={generatedVideoUrl}
+                  />
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <DownloadAction dataUrl={generatedVideoUrl} filename="ai-video.mp4" />
+                    <ShareAction dataUrl={generatedVideoUrl} filename="ai-video.mp4" title="AI Video" />
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-between items-center">
+                  <span className="text-xs text-on-surface-variant/60 font-mono">MODEL: DAMO-TEXT-TO-VIDEO</span>
+                  <Button onClick={handleRegenerate} variant="ghost" size="sm" className="text-on-surface-variant hover:text-primary">
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Regenerate
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

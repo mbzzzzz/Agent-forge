@@ -16,14 +16,15 @@ const GoogleIcon = () => (
 );
 
 const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
-    const { login, signup, loading, error, clearError } = useAuth();
+    const { login, signup, loading, clearError, clearMessage } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    
-    // Clear error when switching between sign in/up
+
+    // Clear error and message when switching between sign in/up
     React.useEffect(() => {
         clearError();
-    }, [isSignUp, clearError]);
+        clearMessage();
+    }, [isSignUp, clearError, clearMessage]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,55 +37,25 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-                <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-3 rounded-lg shadow-lg flex items-center gap-3 text-sm"
-                >
-                    <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
-                    <span className="flex-1">{error}</span>
-                    <button 
-                        type="button"
-                        onClick={clearError}
-                        className="text-red-300 hover:text-red-200 transition-colors"
-                        aria-label="Dismiss error"
-                    >
-                        ✕
-                    </button>
-                </motion.div>
-            )}
-            <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/70" />
-                <Input 
-                    type="email" 
-                    placeholder="email@example.com" 
-                    value={email} 
-                    onChange={e => {
-                        setEmail(e.target.value);
-                        // Don't clear error on typing - let user see the error
-                    }} 
-                    className="pl-10" 
-                    required 
-                />
-            </div>
-            <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant/70" />
-                <Input 
-                    type="password" 
-                    placeholder="Password (min 6 characters)" 
-                    value={password} 
-                    onChange={e => {
-                        setPassword(e.target.value);
-                        // Don't clear error on typing - let user see the error
-                    }} 
-                    className="pl-10" 
-                    required 
-                    minLength={6}
-                />
-            </div>
-            <Button type="submit" isLoading={loading} className="w-full" disabled={loading}>
-                {isSignUp ? <><UserPlus className="w-5 h-5"/>Sign Up</> : <><LogIn className="w-5 h-5"/>Sign In</>}
+            <Input
+                type="email"
+                placeholder="email@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                leftIcon={<Mail className="w-5 h-5" />}
+                required
+            />
+            <Input
+                type="password"
+                placeholder="Password (min 6 characters)"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                leftIcon={<KeyRound className="w-5 h-5" />}
+                required
+                minLength={6}
+            />
+            <Button type="submit" isLoading={loading} className="w-full mt-2" disabled={loading}>
+                {isSignUp ? <><UserPlus className="w-5 h-5" /> Sign Up</> : <><LogIn className="w-5 h-5" /> Sign In</>}
             </Button>
         </form>
     );
@@ -93,78 +64,72 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
 
 const AuthScreen: React.FC = () => {
     const [isSignUp, setIsSignUp] = useState(false);
-    const { loginWithGoogle, loading, error, clearError } = useAuth();
-    
+    const { loginWithGoogle, loading, error, message, clearError, clearMessage } = useAuth();
+
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
             {/* Animated Shader Background */}
             <div className="absolute inset-0 z-0">
                 <ShaderAnimation intensity={0.6} speed={0.8} />
             </div>
-            
+
             {/* Gradient overlays */}
             <div className="absolute inset-0 z-[1]">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background/90 to-secondary/10"></div>
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
                 <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
             </div>
-            
-            <motion.div 
+
+            <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ type: 'spring', duration: 0.6, damping: 20 }}
                 className="w-full max-w-md relative z-10"
             >
-                <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-                    {/* Gradient border effect */}
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/20 via-secondary/20 to-primary/20 opacity-50 blur-xl -z-10"></div>
-                    
+                <div className="bg-glass backdrop-blur-xl border border-outline/20 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
                     {/* Decorative elements */}
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -z-10"></div>
                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full blur-2xl -z-10"></div>
-                    
+
                     <div className="text-center mb-8 relative z-10">
-                        <motion.div 
+                        <motion.div
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.2 }}
                             className="inline-block mb-4"
                         >
-                            <div className="bg-primary/20 p-3 rounded-xl inline-block">
-                                <Bot className="w-8 h-8 text-primary" />
+                            <div className="bg-primary/20 p-3 rounded-xl inline-block border border-primary/20 shadow-inner">
+                                <Bot className="w-10 h-10 text-primary" />
                             </div>
                         </motion.div>
-                        <h1 className="text-4xl font-bold font-display text-on-surface mb-2 bg-gradient-to-r from-on-surface to-on-surface-variant bg-clip-text">
-                            Welcome to AgentForge
+                        <h1 className="text-4xl font-bold font-display text-on-surface mb-2 tracking-tight">
+                            AgentForge
                         </h1>
-                        <p className="text-on-surface-variant mt-2 text-sm">{isSignUp ? 'Create an account to start building.' : 'Sign in to your workspace.'}</p>
+                        <p className="text-on-surface-variant text-sm font-medium">
+                            {isSignUp ? 'Create your creative workspace' : 'Sign in to your dashboard'}
+                        </p>
                     </div>
-                    
-                    <div className="flex items-center bg-surface-variant/20 backdrop-blur-sm rounded-xl p-1 mb-6 border border-outline/20 relative z-10">
+
+                    <div className="flex items-center bg-white/5 rounded-xl p-1 mb-6 border border-white/10 relative z-10">
                         <motion.div
-                            className="absolute top-1 bottom-1 rounded-lg bg-primary-container transition-all duration-300"
-                            style={{
-                                left: isSignUp ? '50%' : '0.25rem',
-                                right: isSignUp ? '0.25rem' : '50%',
+                            layoutId="auth-tab"
+                            className="absolute inset-y-1 bg-primary rounded-lg shadow-lg z-0"
+                            initial={false}
+                            animate={{
+                                left: isSignUp ? '50%' : '4px',
+                                right: isSignUp ? '4px' : '50%'
                             }}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         />
-                        <button 
-                            onClick={() => setIsSignUp(false)} 
-                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-semibold transition-colors duration-200 ${
-                                !isSignUp 
-                                    ? 'text-on-primary-container' 
-                                    : 'text-on-surface-variant hover:text-on-surface'
-                            }`}
+                        <button
+                            onClick={() => setIsSignUp(false)}
+                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-bold text-sm transition-colors duration-200 ${!isSignUp ? 'text-white' : 'text-on-surface-variant hover:text-on-surface'}`}
                         >
                             Sign In
                         </button>
-                        <button 
-                            onClick={() => setIsSignUp(true)} 
-                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-semibold transition-colors duration-200 ${
-                                isSignUp 
-                                    ? 'text-on-primary-container' 
-                                    : 'text-on-surface-variant hover:text-on-surface'
-                            }`}
+                        <button
+                            onClick={() => setIsSignUp(true)}
+                            className={`relative z-10 w-1/2 py-2.5 rounded-lg font-bold text-sm transition-colors duration-200 ${isSignUp ? 'text-white' : 'text-on-surface-variant hover:text-on-surface'}`}
                         >
                             Sign Up
                         </button>
@@ -173,9 +138,9 @@ const AuthScreen: React.FC = () => {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={isSignUp ? 'signup' : 'login'}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
                             transition={{ duration: 0.2 }}
                             className="relative z-10"
                         >
@@ -184,43 +149,53 @@ const AuthScreen: React.FC = () => {
                     </AnimatePresence>
 
                     <div className="flex items-center my-6 relative z-10">
-                        <hr className="flex-grow border-outline/30"/>
-                        <span className="mx-4 text-xs text-on-surface-variant font-medium">OR</span>
-                        <hr className="flex-grow border-outline/30"/>
+                        <div className="flex-grow h-px bg-white/10"></div>
+                        <span className="mx-4 text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">or</span>
+                        <div className="flex-grow h-px bg-white/10"></div>
                     </div>
 
-                    <Button 
-                        onClick={loginWithGoogle} 
-                        isLoading={loading} 
-                        variant="secondary" 
-                        className="w-full relative z-10 hover:scale-[1.02] transition-transform"
+                    <Button
+                        onClick={loginWithGoogle}
+                        isLoading={loading}
+                        variant="secondary"
+                        className="w-full relative z-10 py-3 font-bold border-white/5 hover:bg-white/10 transition-all"
                         disabled={loading}
                     >
                         <GoogleIcon />
                         Continue with Google
                     </Button>
-                    {error && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mt-4 bg-gradient-to-r from-red-500/20 to-red-600/20 backdrop-blur-sm border border-red-500/30 text-red-300 p-3 rounded-lg shadow-lg flex items-center gap-3 text-sm"
-                        >
-                            <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
-                            <span className="flex-1">{error}</span>
-                            <button 
-                                type="button"
-                                onClick={clearError}
-                                className="text-red-300 hover:text-red-200 transition-colors"
-                                aria-label="Dismiss error"
+
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl flex items-center gap-3 text-xs font-medium"
                             >
-                                ✕
-                            </button>
-                        </motion.div>
-                    )}
+                                <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse flex-shrink-0" />
+                                <span className="flex-1">{error}</span>
+                                <button onClick={clearError} className="opacity-60 hover:opacity-100 transition-opacity">✕</button>
+                            </motion.div>
+                        )}
+                        {message && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                className="bg-green-500/10 border border-green-500/20 text-green-400 p-3 rounded-xl flex items-center gap-3 text-xs font-medium"
+                            >
+                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse flex-shrink-0" />
+                                <span className="flex-1">{message}</span>
+                                <button onClick={clearMessage} className="opacity-60 hover:opacity-100 transition-opacity">✕</button>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </motion.div>
         </div>
     );
 };
+
 
 export default AuthScreen;
