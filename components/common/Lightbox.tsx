@@ -79,3 +79,4 @@ const Lightbox: React.FC<LightboxProps> = ({ isOpen, onClose, src, alt = '', typ
 
 export default Lightbox;
 
+

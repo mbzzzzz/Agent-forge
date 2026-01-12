@@ -22,7 +22,7 @@ const getApiKey = (): string => {
 const HF_API_BASE = 'https://api-inference.huggingface.co/models';
 
 // Helper function for text generation
-async function generateText(prompt: string, model: string = 'meta-llama/Meta-Llama-3.1-8B-Instruct'): Promise<string> {
+async function generateText(prompt: string, model: string = 'meta-llama/Meta-Llama-3.1-8B-Instruct', maxTokens: number = 2000): Promise<string> {
   const apiKey = getApiKey();
   const url = `${HF_API_BASE}/${model}`;
 
@@ -36,7 +36,10 @@ async function generateText(prompt: string, model: string = 'meta-llama/Meta-Lla
       inputs: prompt,
       parameters: {
         return_full_text: false,
-        max_new_tokens: 1000,
+        max_new_tokens: maxTokens,
+        temperature: 0.7, // Balanced creativity and consistency
+        top_p: 0.9, // Nucleus sampling for quality
+        repetition_penalty: 1.1, // Reduce repetition
       },
       options: {
         wait_for_model: true,
@@ -229,15 +232,45 @@ async function generateImage(
 // Brand Kit Studio
 export const generateBrandIdentity = async (businessInfo: string): Promise<BrandIdentity> => {
   console.log('Generating brand identity for:', businessInfo);
-  const prompt = `You are a Brand Strategist agent. Analyze the following business information to create a comprehensive brand identity.
-  Business: "${businessInfo}"
-  
-  Generate a brand name, personality profile, voice and tone, brand values, mission statement, and positioning statement.
-  Return the output as a JSON object with keys: "name", "personality", "voice", "values", "mission", "positioning".
-  Return ONLY valid JSON, no markdown formatting.`;
+  const prompt = `You are an elite Brand Strategist with 15+ years of experience working with Fortune 500 companies and innovative startups. Your expertise includes brand positioning, market analysis, consumer psychology, and competitive differentiation.
+
+TASK: Create a comprehensive, professional brand identity that would impress a Creative Director and Marketing VP.
+
+BUSINESS CONTEXT:
+"${businessInfo}"
+
+REQUIREMENTS:
+1. **Brand Name**: Create a memorable, brandable name (2-3 words max) that:
+   - Reflects the business essence and values
+   - Is easy to pronounce and spell
+   - Has potential for trademark protection
+   - Resonates with the target market
+
+2. **Personality Profile**: Define 5-7 personality traits that make this brand unique (e.g., "Bold, Innovative, Approachable, Trustworthy, Disruptive"). Be specific and actionable.
+
+3. **Voice and Tone**: Describe how the brand communicates:
+   - Voice: The brand's consistent personality in communication
+   - Tone: How the voice adapts to different contexts (professional yet warm, authoritative yet approachable, etc.)
+
+4. **Brand Values**: List 4-6 core values that drive the brand's decisions and resonate with customers. Make them specific, not generic.
+
+5. **Mission Statement**: A clear, inspiring 1-2 sentence statement (max 30 words) that defines the brand's purpose and impact.
+
+6. **Positioning Statement**: A strategic statement that clearly differentiates this brand from competitors and defines its unique value proposition in the market.
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with these exact keys: "name", "personality", "voice", "values", "mission", "positioning".
+- "name": string
+- "personality": string (comma-separated traits)
+- "voice": string (detailed description)
+- "values": string (comma-separated list)
+- "mission": string
+- "positioning": string
+
+Return ONLY valid JSON, no markdown, no code blocks, no explanations.`;
 
   try {
-    const text = await generateText(prompt);
+    const text = await generateText(prompt, 'meta-llama/Meta-Llama-3.1-8B-Instruct', 1500);
     console.log('Brand identity response received');
 
     // Try to extract JSON from the response (in case model wraps it in markdown)
@@ -253,7 +286,30 @@ export const generateBrandIdentity = async (businessInfo: string): Promise<Brand
 
 export const generateLogo = async (brandName: string, industry: string, style: string): Promise<string> => {
   console.log('Generating logo for:', brandName, industry, style);
-  const prompt = `Professional logo design for ${brandName}, a ${industry} company. Style: ${style}. Clean, scalable vector-style design on a transparent background. No text unless it is part of a wordmark.`;
+  const prompt = `Create a world-class logo design for "${brandName}", a ${industry} company.
+
+DESIGN BRIEF:
+- Brand: ${brandName}
+- Industry: ${industry}
+- Style Direction: ${style}
+
+DESIGN REQUIREMENTS:
+- Professional, award-winning logo design suitable for a Creative Director's portfolio
+- Clean, minimalist vector-style design that scales perfectly from business card to billboard
+- Transparent background (no background colors or gradients)
+- No text elements unless it's an integral part of a wordmark design
+- Modern, timeless aesthetic that won't look dated in 5-10 years
+- Industry-appropriate symbolism that communicates brand values
+- Balanced composition with proper negative space
+- High contrast for visibility across all applications
+- Professional color palette or monochrome design
+- Suitable for both digital and print applications
+
+QUALITY STANDARDS:
+- Commercial-grade design quality
+- Professional branding standards
+- Portfolio-worthy execution
+- Industry-leading quality`;
 
   try {
     const base64Image = await generateImage(prompt, {
@@ -273,10 +329,51 @@ export const generateLogo = async (brandName: string, industry: string, style: s
 
 export const generateColorPalette = async (brandInfo: string): Promise<ColorPalette> => {
   console.log('Generating color palette for:', brandInfo);
-  const prompt = `As a Brand Strategist, create a color palette for a brand described as: "${brandInfo}". 
-    Provide 2 primary colors, 3 secondary, 2 accent, and 2 neutral colors.
-    Return a JSON object with keys: "primary", "secondary", "accent", "neutral". Each key should be an array of HEX color codes.
-    Return ONLY valid JSON, no markdown formatting.`;
+  const prompt = `You are a Senior Color Strategist and Brand Identity Designer with expertise in color psychology, accessibility, and brand differentiation. Your color palettes have been used by major brands and agencies.
+
+TASK: Create a professional, strategic color palette that a Creative Director would approve.
+
+BRAND CONTEXT:
+"${brandInfo}"
+
+REQUIREMENTS:
+1. **Primary Colors (2)**: Main brand colors that represent the brand's core identity. These should be:
+   - Highly recognizable and memorable
+   - Work well for primary CTAs and key brand elements
+   - Accessible (WCAG AA compliant when possible)
+   - Industry-appropriate
+
+2. **Secondary Colors (3)**: Supporting colors that complement the primary palette:
+   - Used for secondary elements, backgrounds, or variations
+   - Create visual hierarchy and depth
+   - Harmonize with primary colors
+
+3. **Accent Colors (2)**: Bold, attention-grabbing colors for:
+   - Highlights, call-to-actions, or special features
+   - Create visual interest and energy
+   - Stand out while maintaining brand consistency
+
+4. **Neutral Colors (2)**: Versatile colors for:
+   - Text, backgrounds, borders
+   - Professional, clean, and timeless
+   - Work across all applications
+
+COLOR THEORY CONSIDERATIONS:
+- Ensure colors work harmoniously together
+- Consider cultural and psychological associations
+- Maintain brand differentiation from competitors
+- Ensure accessibility and readability
+- Consider both digital and print applications
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with these exact keys: "primary", "secondary", "accent", "neutral".
+Each key must be an array of HEX color codes (e.g., "#FF5733").
+- "primary": array of 2 HEX codes
+- "secondary": array of 3 HEX codes
+- "accent": array of 2 HEX codes
+- "neutral": array of 2 HEX codes
+
+Return ONLY valid JSON, no markdown, no explanations.`;
 
   try {
     const text = await generateText(prompt);
@@ -294,13 +391,52 @@ export const generateColorPalette = async (brandInfo: string): Promise<ColorPale
 
 export const generateTypography = async (brandPersonality: string): Promise<Typography> => {
   console.log('Generating typography for:', brandPersonality);
-  const prompt = `You are a Typography Specialist. Based on a brand's personality, described as "${brandPersonality}", recommend a font pairing from Google Fonts.
-    Provide:
-    1. A "headingFont" (e.g., "Poppins").
-    2. A "bodyFont" (e.g., "Lato").
-    3. A short paragraph of "guidelines" for their usage (e.g., font weights, sizing ratios).
-    Return ONLY a valid JSON object with the keys "headingFont", "bodyFont", and "guidelines".
-    Return ONLY valid JSON, no markdown formatting.`;
+  const prompt = `You are a Senior Typography Director with expertise in type design, font pairing, and brand typography systems. You've created typography guidelines for major brands and design agencies.
+
+TASK: Create a professional typography system that a Creative Director would implement.
+
+BRAND PERSONALITY:
+"${brandPersonality}"
+
+REQUIREMENTS:
+1. **Heading Font**: Select from Google Fonts a font that:
+   - Reflects the brand personality
+   - Has strong presence and hierarchy
+   - Works for headlines, titles, and display text
+   - Has multiple weights (at least Regular, Medium, Bold)
+   - Is readable at large sizes
+   - Creates brand distinction
+
+2. **Body Font**: Select from Google Fonts a font that:
+   - Complements the heading font harmoniously
+   - Is highly readable at small sizes (12-16px)
+   - Works for long-form content
+   - Has excellent screen rendering
+   - Has multiple weights for hierarchy
+   - Maintains readability across devices
+
+3. **Usage Guidelines**: Provide professional typography guidelines including:
+   - Recommended font weights for different use cases
+   - Size ratios between heading and body text
+   - Line height recommendations
+   - Letter spacing adjustments if needed
+   - When to use each font
+   - Best practices for the brand's typography system
+
+TYPOGRAPHY PRINCIPLES:
+- Ensure fonts pair harmoniously (contrast in style, not quality)
+- Consider readability and accessibility
+- Reflect brand personality through type choice
+- Ensure fonts are web-optimized and load quickly
+- Consider both digital and print applications
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with these exact keys: "headingFont", "bodyFont", "guidelines".
+- "headingFont": string (font name from Google Fonts)
+- "bodyFont": string (font name from Google Fonts)
+- "guidelines": string (detailed paragraph with professional typography guidelines)
+
+Return ONLY valid JSON, no markdown, no code blocks.`;
 
   try {
     const text = await generateText(prompt);
@@ -342,7 +478,36 @@ export const generateBrandAsset = async (logoImageBase64: string, assetType: 'Fa
 
 // Mockup Studio
 export const generateMockup = async (mockupType: string, designDescription: string): Promise<string> => {
-  const prompt = `Photorealistic product mockup: a ${mockupType} displaying "${designDescription}". Environment: modern minimalist desk setup. Lighting: soft natural daylight. Angle: 45-degree angle view. Background: blurred office interior.`;
+  const prompt = `Create a premium, award-winning product photography mockup that would be featured in a Creative Director's portfolio or high-end e-commerce catalog.
+
+PRODUCT DETAILS:
+- Product Type: ${mockupType}
+- Design/Content: "${designDescription}"
+
+PHOTOGRAPHY SPECIFICATIONS:
+- Style: Professional commercial product photography
+- Quality: Editorial-grade, magazine-worthy imagery
+- Lighting: Soft, natural daylight with professional studio lighting setup
+- Environment: Modern, minimalist workspace or lifestyle setting
+- Camera Angle: 45-degree perspective with dynamic composition
+- Background: Soft, blurred professional environment (office, studio, or lifestyle setting)
+- Depth of Field: Shallow depth of field with product in sharp focus
+- Color Grading: Professional, clean color correction
+- Shadows: Natural, realistic shadows that ground the product
+- Reflections: Subtle, realistic reflections if applicable
+
+COMPOSITION REQUIREMENTS:
+- Rule of thirds applied
+- Negative space for text overlay if needed
+- Product is the clear focal point
+- Professional framing and cropping
+- Balanced visual weight
+
+QUALITY STANDARDS:
+- Print-ready resolution quality
+- Commercial photography standards
+- Portfolio-worthy execution
+- Suitable for marketing materials, websites, and presentations`;
 
   const base64Image = await generateImage(prompt, {
     width: 1536,
@@ -356,7 +521,38 @@ export const generateMockup = async (mockupType: string, designDescription: stri
 
 // Poster Studio
 export const generatePoster = async (posterType: string, theme: string): Promise<string> => {
-  const prompt = `Professional poster design for a ${posterType}. Theme: ${theme}. Visual style: Modern and vibrant with dynamic typography. Composition: Strong visual hierarchy, eye-catching. Mood: Energetic and exciting. Print-ready design, 18x24 inches aspect ratio.`;
+  const prompt = `Create a stunning, award-winning poster design that would win recognition at design competitions and impress Creative Directors.
+
+POSTER BRIEF:
+- Type: ${posterType}
+- Theme: ${theme}
+
+DESIGN REQUIREMENTS:
+- Visual Style: Modern, contemporary design with professional typography and layout
+- Composition: Strong visual hierarchy following design principles (rule of thirds, golden ratio)
+- Typography: Dynamic, impactful typography that communicates the message clearly
+- Color Palette: Vibrant, engaging colors that support the theme and create visual impact
+- Mood: Energetic, exciting, and attention-grabbing
+- Layout: Professional poster layout optimized for 18x24 inch print format
+- Visual Elements: Striking imagery, graphics, or illustrations that support the theme
+- Readability: Clear, legible text at viewing distance
+- Balance: Well-balanced composition with proper use of negative space
+
+PROFESSIONAL STANDARDS:
+- Print-ready quality (300 DPI equivalent)
+- Professional design agency quality
+- Suitable for large format printing
+- Eye-catching from a distance
+- Memorable and impactful
+- Industry-leading design execution
+
+DESIGN PRINCIPLES:
+- Clear visual hierarchy
+- Effective use of contrast
+- Professional color theory application
+- Strong focal point
+- Balanced composition
+- Professional typography treatment`;
 
   const base64Image = await generateImage(prompt, {
     width: 1280,
@@ -373,7 +569,29 @@ export const generateSocialPost = async (platform: string, theme: string, brandN
   // Extract brand name from theme if it contains brand info
   const brandNameToUse = brandName || (theme.includes(' - ') ? theme.split(' - ')[0] : null);
   
-  const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring.${brandNameToUse ? ` Brand: ${brandNameToUse}.` : ''}`;
+  const imagePrompt = `Create a high-performing, engagement-optimized ${platform} social media post image that a Social Media Manager would approve for a major brand campaign.
+
+CONTENT THEME:
+"${theme}"
+${brandNameToUse ? `Brand: ${brandNameToUse}` : ''}
+
+VISUAL REQUIREMENTS:
+- Style: Professional lifestyle photography with authentic, relatable feel
+- Composition: Instagram-optimized composition following platform best practices
+- Color Palette: Vibrant, warm, and engaging colors that drive engagement
+- Mood: Positive, inspiring, and emotionally resonant
+- Quality: Professional social media content quality
+- Engagement: Visually compelling and scroll-stopping
+- Authenticity: Genuine, relatable imagery that connects with audiences
+- Platform Optimization: Optimized for ${platform} format and audience expectations
+
+PROFESSIONAL STANDARDS:
+- Social media content quality that performs well
+- Brand-appropriate visual style
+- High engagement potential
+- Professional photography or illustration quality
+- Suitable for paid social media advertising
+- Memorable and shareable`;
 
   const aspectRatio = platform === 'Instagram Stories' ? '9:16' : '1:1';
   const dimensions = aspectRatio === '9:16' ? { width: 864, height: 1536 } : { width: 1024, height: 1024 };
@@ -388,10 +606,92 @@ export const generateSocialPost = async (platform: string, theme: string, brandN
     ? `IMPORTANT: Always use the brand name "${brandNameToUse}" with correct spelling throughout. `
     : '';
   
-  const captionPrompt = `You are a Social Media Copywriter. Write an engaging ${platform} caption for a post about "${theme}". ${brandInstruction}Include a strong hook, provide value, and end with a call-to-action. Ensure all spelling is correct, especially for brand names. Return only the caption text, no additional formatting.`;
-  const caption = await generateText(captionPrompt);
+  const captionPrompt = `You are a Senior Social Media Copywriter with 10+ years of experience creating viral content for major brands. Your captions consistently achieve high engagement rates (5%+), drive conversions, and win industry awards.
 
-  const hashtagPrompt = `You are a Hashtag Specialist. Generate a mix of 10 relevant hashtags for a ${platform} post about "${theme}".${brandNameToUse ? ` Include hashtags related to the brand "${brandNameToUse}".` : ''} Mix high-volume, medium-volume, and niche hashtags. Return only the hashtags separated by spaces, no additional text.`;
+TASK: Write a professional, high-performing ${platform} caption that a Social Media Manager would approve immediately.
+
+CONTENT THEME:
+"${theme}"
+${brandInstruction}
+PLATFORM: ${platform}
+
+CAPTION REQUIREMENTS:
+1. **Hook (First Line)**: Create an irresistible opening that stops the scroll:
+   - Ask a question, make a bold statement, or create intrigue
+   - Must be attention-grabbing and relevant
+   - Maximum 125 characters for optimal mobile display
+
+2. **Value Proposition**: Provide genuine value to the audience:
+   - Share insights, tips, or relatable content
+   - Connect emotionally with the target audience
+   - Build trust and credibility
+
+3. **Storytelling**: Weave a compelling narrative:
+   - Use storytelling techniques to engage readers
+   - Create emotional connection
+   - Make it shareable and memorable
+
+4. **Call-to-Action (CTA)**: End with a clear, compelling CTA:
+   - Specific action you want readers to take
+   - Natural and not overly salesy
+   - Aligned with campaign objectives
+
+5. **Brand Integration**: ${brandNameToUse ? `Naturally incorporate "${brandNameToUse}" with correct spelling.` : 'Maintain brand voice and tone.'}
+
+TONE & STYLE:
+- Authentic and conversational
+- Platform-appropriate (${platform} style)
+- Engaging and relatable
+- Professional yet approachable
+- Optimized for mobile reading
+
+QUALITY STANDARDS:
+- Zero spelling or grammar errors
+- Professional copywriting quality
+- High engagement potential
+- Brand-appropriate messaging
+- Clear, concise, and impactful
+
+OUTPUT: Return ONLY the caption text, no additional formatting, no explanations, no markdown.`;
+  
+  const caption = await generateText(captionPrompt, 'meta-llama/Meta-Llama-3.1-8B-Instruct', 500);
+
+  const hashtagPrompt = `You are a Social Media Strategist specializing in hashtag research and optimization. You've increased reach by 300%+ for major brands through strategic hashtag use.
+
+TASK: Create a strategic hashtag mix that maximizes reach and engagement for a ${platform} post.
+
+CONTENT THEME:
+"${theme}"
+${brandNameToUse ? `Brand: "${brandNameToUse}"` : ''}
+PLATFORM: ${platform}
+
+HASHTAG STRATEGY:
+Create a mix of 10-12 hashtags following this distribution:
+
+1. **High-Volume Hashtags (2-3)**: Broad, popular hashtags with 500K+ posts
+   - Maximum reach potential
+   - Platform trending topics if relevant
+
+2. **Medium-Volume Hashtags (4-5)**: Niche hashtags with 50K-500K posts
+   - Better engagement rates
+   - More targeted audience
+   - Industry or topic-specific
+
+3. **Niche Hashtags (3-4)**: Specific hashtags with 10K-50K posts
+   - Highly engaged communities
+   - Less competition
+   - Brand or campaign-specific
+   ${brandNameToUse ? `- Include variations of "${brandNameToUse}" (e.g., #${brandNameToUse.replace(/\s+/g, '')}, #${brandNameToUse.replace(/\s+/g, '')}Life)` : ''}
+
+HASHTAG QUALITY:
+- All hashtags must be relevant to the content
+- Mix of trending and evergreen hashtags
+- Platform-optimized (${platform} best practices)
+- No banned or spam hashtags
+- Include brand-specific hashtags if applicable
+- Consider seasonal or trending topics
+
+OUTPUT: Return ONLY the hashtags separated by single spaces, no additional text, no explanations, no formatting. Example format: "#hashtag1 #hashtag2 #hashtag3"`;
   const hashtags = await generateText(hashtagPrompt);
 
   return {
@@ -404,26 +704,69 @@ export const generateSocialPost = async (platform: string, theme: string, brandN
 // Brand Campaign Studio
 export const generateCampaignIdeas = async (input: CampaignInput): Promise<BrandCampaign[]> => {
   console.log('Generating campaign ideas for:', input);
-  const prompt = `You are a Senior Marketing Strategist. Create 5 distinct marketing campaign concepts for:
-    Brand Name: "${input.brandName}" (IMPORTANT: Always use this exact brand name spelling throughout all responses)
-    Brand Tone: "${input.tone}"
-    Target Audience: "${input.targetAudience}"
-    Products/Services: "${input.products}"
+  const prompt = `You are a Chief Marketing Officer and Creative Strategist with 20+ years of experience launching award-winning campaigns for Fortune 500 companies. Your campaigns have won Cannes Lions, Clios, and driven millions in revenue.
 
-    CRITICAL INSTRUCTIONS:
-    - Always spell the brand name "${input.brandName}" exactly as provided above. Do not modify, abbreviate, or change the spelling.
-    - Use the brand name "${input.brandName}" consistently in all campaign titles, descriptions, and messages.
-    - Ensure all text is grammatically correct and professionally written.
+TASK: Create 5 distinct, world-class marketing campaign concepts that would impress a Creative Director and Marketing VP.
 
-    For each campaign, provide:
-    1. A catchy "title" (must include the brand name "${input.brandName}").
-    2. A short "description" (must include the brand name "${input.brandName}").
-    3. The main "objective".
-    4. The specific "targetAudience" segment.
-    5. The "keyMessage" (must include the brand name "${input.brandName}").
+BRAND BRIEF:
+- Brand Name: "${input.brandName}" (CRITICAL: Always use this EXACT spelling - "${input.brandName}" - never modify, abbreviate, or change it)
+- Brand Tone: ${input.tone}
+- Target Audience: ${input.targetAudience}
+- Products/Services: ${input.products}
 
-    Return ONLY a valid JSON array of objects, where each object has keys: "title", "description", "objective", "targetAudience", "keyMessage".
-    Return ONLY valid JSON, no markdown formatting.`;
+CAMPAIGN REQUIREMENTS:
+Each campaign must be:
+1. **Distinct and Unique**: No two campaigns should be similar
+2. **Strategically Sound**: Based on solid marketing principles
+3. **Creative and Memorable**: Award-worthy creative concepts
+4. **Brand-Aligned**: Consistent with brand tone and values
+5. **Audience-Focused**: Tailored to ${input.targetAudience}
+6. **Results-Driven**: Clear objectives and measurable outcomes
+
+FOR EACH CAMPAIGN, PROVIDE:
+
+1. **Title**: A compelling, memorable campaign name (3-8 words) that:
+   - Must include "${input.brandName}" with correct spelling
+   - Captures the campaign essence
+   - Is shareable and memorable
+   - Reflects the campaign's energy
+
+2. **Description**: A concise 2-3 sentence description (50-100 words) that:
+   - Must include "${input.brandName}" with correct spelling
+   - Explains the campaign concept clearly
+   - Highlights unique value proposition
+   - Engages and intrigues
+
+3. **Objective**: Clear, specific marketing objective such as:
+   - Brand awareness and recognition
+   - Lead generation and conversion
+   - Customer engagement and retention
+   - Product launch or promotion
+   - Market expansion
+   - Be specific and measurable
+
+4. **Target Audience**: Specific segment of "${input.targetAudience}" that this campaign targets (e.g., "Tech-savvy Millennials interested in sustainability")
+
+5. **Key Message**: The core message (1-2 sentences) that:
+   - Must naturally include "${input.brandName}" with correct spelling
+   - Resonates with the target audience
+   - Differentiates from competitors
+   - Drives action
+   - Is clear and memorable
+
+QUALITY STANDARDS:
+- Professional marketing strategy quality
+- Creative Director approval level
+- Grammatically perfect
+- Brand name "${input.brandName}" spelled correctly in ALL instances
+- Strategic and creative excellence
+- Industry-leading campaign concepts
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON array of exactly 5 objects. Each object must have these exact keys:
+"title", "description", "objective", "targetAudience", "keyMessage"
+
+Return ONLY valid JSON, no markdown, no code blocks, no explanations.`;
 
   try {
     const text = await generateText(prompt);
@@ -451,26 +794,81 @@ export const generateCarouselPost = async (campaign: BrandCampaign, theme: strin
   const brandNameToUse = brandName || campaign.title.split(' ')[0];
 
   // 1. Generate Content Structure
-  const contentPrompt = `Create a 5-slide Instagram carousel post for the campaign "${campaign.title}" with the theme "${theme}".
-    Key Message: "${campaign.keyMessage}"
-    Brand Name: "${brandNameToUse}" (IMPORTANT: Always use this exact brand name spelling - "${brandNameToUse}")
-    
-    CRITICAL INSTRUCTIONS:
-    - Always spell the brand name "${brandNameToUse}" exactly as provided. Do not modify, abbreviate, or change the spelling.
-    - Include the brand name "${brandNameToUse}" naturally in the caption and ensure correct spelling.
-    - Ensure all text is grammatically correct, engaging, and optimized for Instagram.
-    - Create hashtags that are relevant to the brand "${brandNameToUse}" and campaign theme.
-    - Make the caption engaging with a strong hook, valuable content, and a clear call-to-action.
-    
-    Return a valid JSON object with:
-    1. "slides": An array of 5 objects, each with "imageDescription" (detailed description for AI image generation) and "caption" (short text for the slide, max 50 characters).
-    2. "mainCaption": A complete Instagram post caption (150-300 words) that includes the brand name "${brandNameToUse}" with correct spelling, has a strong hook, provides value, and includes a call-to-action.
-    3. "hashtags": A string of 10-15 relevant hashtags separated by spaces, including brand-specific and campaign-related hashtags.
-    Return ONLY valid JSON, no markdown formatting.`;
+  const contentPrompt = `You are a Senior Social Media Creative Director specializing in Instagram carousel campaigns. Your carousels consistently achieve 10%+ engagement rates and have won industry awards. You understand visual storytelling, audience psychology, and Instagram algorithm optimization.
+
+TASK: Create a world-class, high-performing 5-slide Instagram carousel that a Creative Director and Social Media Manager would approve for a major brand campaign.
+
+CAMPAIGN CONTEXT:
+- Campaign Title: "${campaign.title}"
+- Campaign Theme: "${theme}"
+- Key Message: "${campaign.keyMessage}"
+- Brand Name: "${brandNameToUse}" (CRITICAL: Always spell exactly as "${brandNameToUse}" - never modify)
+
+CAROUSEL STRATEGY:
+Create a cohesive, scroll-stopping carousel that tells a compelling story across 5 slides. Each slide should:
+- Build on the previous slide
+- Maintain visual and narrative consistency
+- Drive engagement and completion rate
+- Support the overall campaign message
+
+SLIDE REQUIREMENTS:
+
+For each of the 5 slides, provide:
+
+1. **imageDescription**: A detailed, professional description for AI image generation (100-150 words) that includes:
+   - Specific visual elements, composition, and style
+   - Consistent brand aesthetic across all slides
+   - Professional photography or illustration direction
+   - Color palette and mood
+   - Visual storytelling elements
+   - Instagram-optimized composition
+   - High-quality, engaging visuals
+
+2. **caption**: Short, punchy text for the slide (max 50 characters) that:
+   - Works as overlay text or slide description
+   - Supports the visual narrative
+   - Is readable and impactful
+   - Maintains brand voice
+
+MAIN CAPTION REQUIREMENTS:
+Create a complete Instagram post caption (200-350 words) that:
+
+1. **Hook (First 2-3 Lines)**: Irresistible opening that stops the scroll
+2. **Story Arc**: Tell a compelling story across the caption
+3. **Value Delivery**: Provide genuine value or insights
+4. **Brand Integration**: Naturally include "${brandNameToUse}" with correct spelling multiple times
+5. **Engagement Elements**: Include questions, emojis strategically, and engagement prompts
+6. **Call-to-Action**: Clear, compelling CTA that drives action
+7. **Tone**: Authentic, engaging, platform-optimized for Instagram
+
+HASHTAG STRATEGY:
+Provide 12-15 strategic hashtags including:
+- 2-3 high-volume hashtags (500K+ posts)
+- 5-6 medium-volume hashtags (50K-500K posts)
+- 4-5 niche hashtags (10K-50K posts)
+- Brand-specific hashtags for "${brandNameToUse}"
+- Campaign-specific hashtags
+- Industry and topic-relevant hashtags
+
+QUALITY STANDARDS:
+- Professional social media content quality
+- Award-winning creative execution
+- Zero spelling errors (especially "${brandNameToUse}")
+- High engagement potential
+- Brand-consistent messaging
+- Instagram algorithm optimized
+
+OUTPUT FORMAT:
+Return ONLY a valid JSON object with these exact keys:
+- "slides": Array of 5 objects, each with "imageDescription" (string) and "caption" (string, max 50 chars)
+- "mainCaption": String (200-350 words)
+- "hashtags": String (12-15 hashtags separated by spaces)
+
+Return ONLY valid JSON, no markdown, no code blocks, no explanations.`;
 
   let contentData;
   try {
-    const text = await generateText(contentPrompt);
+    const text = await generateText(contentPrompt, 'meta-llama/Meta-Llama-3.1-8B-Instruct', 2500);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const jsonText = jsonMatch ? jsonMatch[0] : text;
     contentData = JSON.parse(jsonText);
@@ -478,9 +876,22 @@ export const generateCarouselPost = async (campaign: BrandCampaign, theme: strin
     throw new Error("Failed to generate carousel content structure");
   }
 
-  // 2. Generate Images for each slide
+    // 2. Generate Images for each slide
   const slidesWithImages = await Promise.all(contentData.slides.map(async (slide: any, index: number) => {
-    const imagePrompt = `Instagram carousel slide ${index + 1}. ${slide.imageDescription}. Style: consistent brand aesthetic, professional photography or illustration.`;
+    const imagePrompt = `Create a premium, high-performing Instagram carousel slide ${index + 1} of 5 for a professional brand campaign.
+
+VISUAL DIRECTION:
+${slide.imageDescription}
+
+DESIGN REQUIREMENTS:
+- Style: Consistent brand aesthetic with professional photography or illustration
+- Quality: Award-winning social media content quality
+- Composition: Instagram-optimized, scroll-stopping composition
+- Visual Consistency: Maintains cohesive style with other carousel slides
+- Engagement: Visually compelling and shareable
+- Brand Alignment: Professional, on-brand visual execution
+- Platform Optimization: Optimized for Instagram carousel format (1080x1080px)
+- Professional Standards: Creative Director approval level quality`;
 
     try {
       const imageBase64 = await generateImage(imagePrompt, {
@@ -523,8 +934,20 @@ export const generateVideo = async (prompt: string, setStatus: (status: string) 
   try {
     setStatus('Generating video. This may take several minutes...');
 
-    // Enhanced video prompt with quality terms
-    const enhancedVideoPrompt = `${prompt}, 8k hyper realistic graphics, ultra high quality, highly detailed, cinematic, professional videography, smooth motion, realistic lighting, sharp focus, masterpiece quality, best quality video`;
+    // Enhanced video prompt with professional cinematography direction
+    const enhancedVideoPrompt = `${prompt}
+
+CINEMATOGRAPHY SPECIFICATIONS:
+- Quality: 8K hyper-realistic graphics, ultra-high definition, professional-grade production
+- Style: Cinematic, award-winning videography suitable for commercial advertising
+- Motion: Smooth, natural motion with professional camera movements
+- Lighting: Cinematic lighting setup with realistic shadows and highlights
+- Focus: Sharp focus with professional depth of field
+- Color Grading: Professional color correction and grading
+- Composition: Rule of thirds, dynamic framing, professional shot composition
+- Production Value: High-end commercial or film production quality
+- Visual Storytelling: Compelling narrative through visual elements
+- Professional Standards: Creative Director and Film Director approval level`;
 
     // Wan2.2 model parameters based on documentation
     const response = await fetch(url, {

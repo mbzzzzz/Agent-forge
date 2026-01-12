@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import Button from './common/Button';
 import Input from './common/Input';
-import { Mail, KeyRound, LogIn, UserPlus, Bot } from 'lucide-react';
+import { Mail, KeyRound, LogIn, UserPlus } from 'lucide-react';
+import iconImage from '../assets/icon.png';
 import { ShaderAnimation } from './ui/shader-animation';
 
 const GoogleIcon = () => (
@@ -110,7 +111,11 @@ const AuthScreen: React.FC = () => {
                             className="inline-block mb-6"
                         >
                             <div className="bg-primary/20 p-4 rounded-2xl inline-block border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)]">
-                                <Bot className="w-10 h-10 text-primary" />
+                                <img 
+                                    src={iconImage} 
+                                    alt="AgentForge" 
+                                    className="w-12 h-12 object-contain"
+                                />
                             </div>
                         </motion.div>
                         <h1 className="text-4xl font-bold font-display text-on-surface mb-3 tracking-tight">

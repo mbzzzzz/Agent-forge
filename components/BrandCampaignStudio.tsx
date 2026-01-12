@@ -355,7 +355,7 @@ const BrandCampaignStudio: React.FC = () => {
                             </motion.p>
                         )}
                         <span className={`text-xs ml-auto ${input.products.length < 10 ? 'text-on-surface-variant/60' : 'text-green-400'}`}>
-                            {input.products.length} / 10 min
+                            {input.products.length} {input.products.length === 1 ? 'character' : 'characters'} {input.products.length < 10 && '(min 10)'}
                         </span>
                     </div>
                 </div>
