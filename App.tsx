@@ -36,6 +36,8 @@ const Sidebar: React.FC<{
   activeModule: ModuleId;
   setActiveModule: (id: ModuleId) => void;
 }> = ({ activeModule, setActiveModule }) => {
+  const { logout } = useAuth();
+
   return (
     <aside className="w-80 bg-glass backdrop-blur-[var(--glass-blur)] border-r border-white/10 p-6 flex flex-col z-10 shrink-0 shadow-2xl relative">
       {/* Gradient accent */}
@@ -80,13 +82,25 @@ const Sidebar: React.FC<{
           </button>
         ))}
       </nav>
-      <div className="mt-auto text-center text-on-surface-variant/40 text-xs px-4 pb-4 border-t border-outline/20 pt-4">
-        <p>Powered by Hugging Face</p>
-        <p className="mt-1">Built with Supabase</p>
+
+      <div className="mt-auto space-y-4">
+        <button
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
+        >
+          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-semibold text-sm">Sign Out</span>
+        </button>
+
+        <div className="text-center text-on-surface-variant/40 text-xs px-4 pb-4 border-t border-outline/20 pt-4">
+          <p>Powered by Hugging Face</p>
+          <p className="mt-1">Built with Supabase</p>
+        </div>
       </div>
     </aside>
   );
 };
+
 
 const UserMenu: React.FC = () => {
   const { user, logout } = useAuth();
