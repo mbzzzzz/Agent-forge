@@ -21,58 +21,148 @@ const getApiKey = (): string => {
 
 const HF_API_BASE = 'https://api-inference.huggingface.co/models';
 
+// Function to clean markdown and AI-generated patterns from text
+function cleanGeneratedText(text: string): string {
+  if (!text) return text;
+  
+  let cleaned = text;
+  
+  // Remove markdown headers (# ## ###)
+  cleaned = cleaned.replace(/^#{1,6}\s+/gm, '');
+  
+  // Remove markdown bold/italic (* ** ***)
+  cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
+  cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
+  cleaned = cleaned.replace(/__([^_]+)__/g, '$1');
+  cleaned = cleaned.replace(/_([^_]+)_/g, '$1');
+  
+  // Remove markdown lists (- * +)
+  cleaned = cleaned.replace(/^[\s]*[-*+]\s+/gm, '');
+  cleaned = cleaned.replace(/^\d+\.\s+/gm, '');
+  
+  // Remove markdown code blocks (``` ```)
+  cleaned = cleaned.replace(/```[\s\S]*?```/g, '');
+  cleaned = cleaned.replace(/`([^`]+)`/g, '$1');
+  
+  // Remove markdown links [text](url)
+  cleaned = cleaned.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+  
+  // Remove common AI-generated phrases
+  const aiPhrases = [
+    /^As an AI[,\s]/gi,
+    /^I'm an AI[,\s]/gi,
+    /^I am an AI[,\s]/gi,
+    /^Here's\s+(a|the|some)/gi,
+    /^Here is\s+(a|the|some)/gi,
+    /^Let me\s+/gi,
+    /^I'll\s+/gi,
+    /^I will\s+/gi,
+    /^I can\s+/gi,
+    /^I would\s+/gi,
+    /^I should\s+/gi,
+    /^I think\s+/gi,
+    /^I believe\s+/gi,
+    /^I hope\s+/gi,
+    /^I'm here\s+/gi,
+    /^I'm designed\s+/gi,
+    /^I'm programmed\s+/gi,
+    /^I'm trained\s+/gi,
+    /^I'm a language model/gi,
+    /^I'm an AI assistant/gi,
+    /^I'm ChatGPT/gi,
+    /^I'm Claude/gi,
+    /^I'm Gemini/gi,
+    /^I'm an AI language model/gi,
+    /^I'm an artificial intelligence/gi,
+    /^As a language model/gi,
+    /^As an AI language model/gi,
+    /^As an artificial intelligence/gi,
+    /^Note:\s*/gi,
+    /^Important:\s*/gi,
+    /^Please note:\s*/gi,
+    /^Keep in mind:\s*/gi,
+    /^Remember:\s*/gi,
+    /^It's important to note/gi,
+    /^It's worth noting/gi,
+    /^It should be noted/gi,
+  ];
+  
+  aiPhrases.forEach(pattern => {
+    cleaned = cleaned.replace(pattern, '');
+  });
+  
+  // Remove excessive whitespace and newlines
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  cleaned = cleaned.replace(/[ \t]+/g, ' ');
+  cleaned = cleaned.trim();
+  
+  return cleaned;
+}
+
 // Helper function for text generation
-async function generateText(prompt: string, model: string = 'meta-llama/Meta-Llama-3.1-8B-Instruct', maxTokens: number = 2000): Promise<string> {
+async function generateText(prompt: string, model: string = 'mistralai/Mistral-7B-Instruct-v0.2', maxTokens: number = 2000): Promise<string> {
   const apiKey = getApiKey();
   const url = `${HF_API_BASE}/${model}`;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        return_full_text: false,
-        max_new_tokens: maxTokens,
-        temperature: 0.7, // Balanced creativity and consistency
-        top_p: 0.9, // Nucleus sampling for quality
-        repetition_penalty: 1.1, // Reduce repetition
+  console.log('Text generation request:', { model, url, promptLength: prompt.length });
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-      options: {
-        wait_for_model: true,
-      },
-    }),
-  });
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          return_full_text: false,
+          max_new_tokens: maxTokens,
+          temperature: 0.7, // Balanced creativity and consistency
+          top_p: 0.9, // Nucleus sampling for quality
+          repetition_penalty: 1.1, // Reduce repetition
+        },
+        options: {
+          wait_for_model: true,
+        },
+      }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Hugging Face API error: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-
-  const data = await response.json();
-
-  // Handle different response formats
-  if (Array.isArray(data) && data.length > 0) {
-    if (typeof data[0] === 'string') {
-      return data[0];
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Text generation API error:', { status: response.status, statusText: response.statusText, errorText });
+      throw new Error(`Hugging Face API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
-    if (typeof data[0] === 'object' && 'generated_text' in data[0]) {
-      return data[0].generated_text;
+
+    const data = await response.json();
+    console.log('Text generation response received:', { dataType: typeof data, isArray: Array.isArray(data) });
+
+    // Handle different response formats
+    if (Array.isArray(data) && data.length > 0) {
+      if (typeof data[0] === 'string') {
+        return cleanGeneratedText(data[0]);
+      }
+      if (typeof data[0] === 'object' && 'generated_text' in data[0]) {
+        return cleanGeneratedText(data[0].generated_text);
+      }
     }
-  }
 
-  if (typeof data === 'object' && 'generated_text' in data) {
-    return data.generated_text;
-  }
+    if (typeof data === 'object' && 'generated_text' in data) {
+      return cleanGeneratedText(data.generated_text);
+    }
 
-  if (typeof data === 'string') {
-    return data;
-  }
+    if (typeof data === 'string') {
+      return cleanGeneratedText(data);
+    }
 
-  throw new Error('Unexpected response format from text generation API');
+    throw new Error('Unexpected response format from text generation API');
+  } catch (error: any) {
+    console.error('Text generation fetch error:', error);
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      throw new Error('Network error: Unable to connect to Hugging Face API. Please check your internet connection and try again.');
+    }
+    throw error;
+  }
 }
 
 // Prompt enhancement function based on use case
@@ -126,8 +216,11 @@ async function generateImage(
   }
 ): Promise<string> {
   const apiKey = getApiKey();
-  // Using Flux Schnell for fast, high-quality image generation via Inference API
-  const model = 'black-forest-labs/FLUX.1-schnell';
+  // Using Stable Diffusion XL for reliable, high-quality image generation via Inference API
+  // Alternative models to try if this doesn't work:
+  // - 'runwayml/stable-diffusion-v1-5' (more reliable, faster)
+  // - 'black-forest-labs/FLUX.1-schnell' (if you have access, higher quality)
+  const model = 'stabilityai/stable-diffusion-xl-base-1.0';
 
   // Enhanced prompt with use-case specific improvements
   const useCase = options?.useCase || 'general';
@@ -167,65 +260,76 @@ async function generateImage(
   }
 
   const url = `${HF_API_BASE}/${model}`;
+  console.log('Image generation request:', { model, url, promptLength: enhancedPrompt.length, width, height });
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      inputs: enhancedPrompt,
-      parameters: {
-        width,
-        height,
-        num_inference_steps: options?.num_inference_steps || 28,
-        guidance_scale: 3.5,
-        negative_prompt: negativePrompt,
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-      options: {
-        wait_for_model: true,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Hugging Face API error: ${response.status} ${response.statusText} - ${errorText}`);
-  }
-
-  // Check content type to determine response format
-  const contentType = response.headers.get('content-type');
-
-  if (contentType?.includes('application/json')) {
-    // JSON response with base64 image
-    const data = await response.json();
-    if (data.image && typeof data.image === 'string') {
-      // Remove data URL prefix if present
-      return data.image.includes(',') ? data.image.split(',')[1] : data.image;
-    }
-    if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
-      // Base64 string in array
-      const base64 = data[0];
-      return base64.includes(',') ? base64.split(',')[1] : base64;
-    }
-    throw new Error('Unexpected JSON response format from image generation API');
-  } else {
-    // Image blob response
-    const blob = await response.blob();
-
-    // Convert blob to base64
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        // Remove data URL prefix if present
-        const base64 = base64String.includes(',') ? base64String.split(',')[1] : base64String;
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+      body: JSON.stringify({
+        inputs: enhancedPrompt,
+        parameters: {
+          width,
+          height,
+          num_inference_steps: options?.num_inference_steps || 28,
+          guidance_scale: 7.5, // SDXL uses different guidance scale
+          negative_prompt: negativePrompt,
+        },
+        options: {
+          wait_for_model: true,
+        },
+      }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Image generation API error:', { status: response.status, statusText: response.statusText, errorText });
+      throw new Error(`Hugging Face API error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    // Check content type to determine response format
+    const contentType = response.headers.get('content-type');
+    console.log('Image generation response received:', { contentType });
+
+    if (contentType?.includes('application/json')) {
+      // JSON response with base64 image
+      const data = await response.json();
+      if (data.image && typeof data.image === 'string') {
+        // Remove data URL prefix if present
+        return data.image.includes(',') ? data.image.split(',')[1] : data.image;
+      }
+      if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'string') {
+        // Base64 string in array
+        const base64 = data[0];
+        return base64.includes(',') ? base64.split(',')[1] : base64;
+      }
+      throw new Error('Unexpected JSON response format from image generation API');
+    } else {
+      // Image blob response
+      const blob = await response.blob();
+
+      // Convert blob to base64
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          // Remove data URL prefix if present
+          const base64 = base64String.includes(',') ? base64String.split(',')[1] : base64String;
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+  } catch (error: any) {
+    console.error('Image generation fetch error:', error);
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      throw new Error('Network error: Unable to connect to Hugging Face API. Please check your internet connection and try again.');
+    }
+    throw error;
   }
 }
 
@@ -267,17 +371,32 @@ Return ONLY a valid JSON object with these exact keys: "name", "personality", "v
 - "mission": string
 - "positioning": string
 
-Return ONLY valid JSON, no markdown, no code blocks, no explanations.`;
+CRITICAL OUTPUT REQUIREMENTS:
+- Return ONLY valid JSON, no markdown formatting (#, *, **, etc.)
+- No code blocks, no explanations, no AI-generated language
+- Write naturally as a human brand strategist would
+- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- Use direct, professional language without self-referential AI terms
+- No markdown headers, bold, italic, or list formatting`;
 
   try {
-    const text = await generateText(prompt, 'meta-llama/Meta-Llama-3.1-8B-Instruct', 1500);
+    const text = await generateText(prompt, 'mistralai/Mistral-7B-Instruct-v0.2', 1500);
     console.log('Brand identity response received');
 
     // Try to extract JSON from the response (in case model wraps it in markdown)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const jsonText = jsonMatch ? jsonMatch[0] : text;
 
-    return JSON.parse(jsonText) as BrandIdentity;
+    const parsed = JSON.parse(jsonText) as BrandIdentity;
+    
+    // Clean all string values in the parsed object
+    Object.keys(parsed).forEach(key => {
+      if (typeof parsed[key as keyof BrandIdentity] === 'string') {
+        (parsed[key as keyof BrandIdentity] as any) = cleanGeneratedText(parsed[key as keyof BrandIdentity] as string);
+      }
+    });
+    
+    return parsed;
   } catch (error: any) {
     console.error('Error generating brand identity:', error);
     throw new Error(`Failed to generate brand identity: ${error?.message || 'Unknown error'}`);
@@ -373,7 +492,12 @@ Each key must be an array of HEX color codes (e.g., "#FF5733").
 - "accent": array of 2 HEX codes
 - "neutral": array of 2 HEX codes
 
-Return ONLY valid JSON, no markdown, no explanations.`;
+CRITICAL OUTPUT REQUIREMENTS:
+- Return ONLY valid JSON, no markdown formatting (#, *, **, etc.)
+- No code blocks, no explanations, no AI-generated language
+- Write naturally as a human color strategist would
+- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- Use direct, professional language without self-referential AI terms`;
 
   try {
     const text = await generateText(prompt);
@@ -381,6 +505,15 @@ Return ONLY valid JSON, no markdown, no explanations.`;
     const jsonText = jsonMatch ? jsonMatch[0] : text;
 
     const parsed = JSON.parse(jsonText) as ColorPalette;
+    
+    // Clean all string values in the parsed object
+    Object.keys(parsed).forEach(key => {
+      if (Array.isArray(parsed[key as keyof ColorPalette])) {
+        const arr = parsed[key as keyof ColorPalette] as string[];
+        parsed[key as keyof ColorPalette] = arr.map(item => cleanGeneratedText(item)) as any;
+      }
+    });
+    
     console.log('Color palette generated');
     return parsed;
   } catch (error: any) {
@@ -436,7 +569,13 @@ Return ONLY a valid JSON object with these exact keys: "headingFont", "bodyFont"
 - "bodyFont": string (font name from Google Fonts)
 - "guidelines": string (detailed paragraph with professional typography guidelines)
 
-Return ONLY valid JSON, no markdown, no code blocks.`;
+CRITICAL OUTPUT REQUIREMENTS:
+- Return ONLY valid JSON, no markdown formatting (#, *, **, etc.)
+- No code blocks, no explanations, no AI-generated language
+- Write naturally as a human typography director would
+- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- Use direct, professional language without self-referential AI terms
+- Guidelines should be written in plain text, no markdown`;
 
   try {
     const text = await generateText(prompt);
@@ -444,6 +583,14 @@ Return ONLY valid JSON, no markdown, no code blocks.`;
     const jsonText = jsonMatch ? jsonMatch[0] : text;
 
     const parsed = JSON.parse(jsonText) as Typography;
+    
+    // Clean all string values in the parsed object
+    Object.keys(parsed).forEach(key => {
+      if (typeof parsed[key as keyof Typography] === 'string') {
+        (parsed[key as keyof Typography] as any) = cleanGeneratedText(parsed[key as keyof Typography] as string);
+      }
+    });
+    
     console.log('Typography generated');
     return parsed;
   } catch (error: any) {
@@ -652,9 +799,15 @@ QUALITY STANDARDS:
 - Brand-appropriate messaging
 - Clear, concise, and impactful
 
-OUTPUT: Return ONLY the caption text, no additional formatting, no explanations, no markdown.`;
+CRITICAL OUTPUT REQUIREMENTS:
+- Return ONLY the caption text, no additional formatting
+- No markdown (#, *, **, etc.), no code blocks, no explanations
+- Write naturally as a human social media copywriter would
+- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- Use direct, engaging language without self-referential AI terms
+- The caption should sound authentic and human-written`;
   
-  const caption = await generateText(captionPrompt, 'meta-llama/Meta-Llama-3.1-8B-Instruct', 500);
+  const caption = await generateText(captionPrompt, 'mistralai/Mistral-7B-Instruct-v0.2', 500);
 
   const hashtagPrompt = `You are a Social Media Strategist specializing in hashtag research and optimization. You've increased reach by 300%+ for major brands through strategic hashtag use.
 
@@ -691,13 +844,19 @@ HASHTAG QUALITY:
 - Include brand-specific hashtags if applicable
 - Consider seasonal or trending topics
 
-OUTPUT: Return ONLY the hashtags separated by single spaces, no additional text, no explanations, no formatting. Example format: "#hashtag1 #hashtag2 #hashtag3"`;
+CRITICAL OUTPUT REQUIREMENTS:
+- Return ONLY the hashtags separated by single spaces
+- No additional text, no explanations, no formatting
+- No markdown (# for headers, only use # for hashtags), no code blocks
+- Write naturally as a human social media strategist would
+- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- Example format: "#hashtag1 #hashtag2 #hashtag3"`;
   const hashtags = await generateText(hashtagPrompt);
 
   return {
     image: imageBase64,
-    caption: caption.trim(),
-    hashtags: hashtags.trim(),
+    caption: cleanGeneratedText(caption.trim()),
+    hashtags: cleanGeneratedText(hashtags.trim()),
   };
 };
 
@@ -766,7 +925,13 @@ OUTPUT FORMAT:
 Return ONLY a valid JSON array of exactly 5 objects. Each object must have these exact keys:
 "title", "description", "objective", "targetAudience", "keyMessage"
 
-Return ONLY valid JSON, no markdown, no code blocks, no explanations.`;
+CRITICAL OUTPUT REQUIREMENTS:
+- Return ONLY valid JSON, no markdown formatting (#, *, **, etc.)
+- No code blocks, no explanations, no AI-generated language
+- Write naturally as a human marketing strategist would
+- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- Use direct, professional language without self-referential AI terms
+- All text fields should be plain text, no markdown formatting`;
 
   try {
     const text = await generateText(prompt);
@@ -776,11 +941,18 @@ Return ONLY valid JSON, no markdown, no code blocks, no explanations.`;
 
     const campaigns = JSON.parse(jsonText);
 
-    // Add IDs to campaigns
-    return campaigns.map((c: any, index: number) => ({
-      ...c,
-      id: `campaign-${Date.now()}-${index}`
-    }));
+    // Clean all string values in campaigns and add IDs
+    return campaigns.map((c: any, index: number) => {
+      const cleaned: any = { id: `campaign-${Date.now()}-${index}` };
+      Object.keys(c).forEach(key => {
+        if (typeof c[key] === 'string') {
+          cleaned[key] = cleanGeneratedText(c[key]);
+        } else {
+          cleaned[key] = c[key];
+        }
+      });
+      return cleaned;
+    });
   } catch (error: any) {
     console.error('Error generating campaign ideas:', error);
     throw new Error(`Failed to generate campaign ideas: ${error?.message || 'Unknown error'}`);
@@ -864,11 +1036,17 @@ Return ONLY a valid JSON object with these exact keys:
 - "mainCaption": String (200-350 words)
 - "hashtags": String (12-15 hashtags separated by spaces)
 
-Return ONLY valid JSON, no markdown, no code blocks, no explanations.`;
+CRITICAL OUTPUT REQUIREMENTS:
+- Return ONLY valid JSON, no markdown formatting (#, *, **, etc.)
+- No code blocks, no explanations, no AI-generated language
+- Write naturally as a human creative director would
+- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- Use direct, engaging language without self-referential AI terms
+- All text fields should be plain text, no markdown formatting`;
 
   let contentData;
   try {
-    const text = await generateText(contentPrompt, 'meta-llama/Meta-Llama-3.1-8B-Instruct', 2500);
+    const text = await generateText(contentPrompt, 'mistralai/Mistral-7B-Instruct-v0.2', 2500);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const jsonText = jsonMatch ? jsonMatch[0] : text;
     contentData = JSON.parse(jsonText);
@@ -914,10 +1092,14 @@ DESIGN REQUIREMENTS:
     }
   }));
 
+  // Clean all text content
   return {
-    slides: slidesWithImages,
-    caption: contentData.mainCaption,
-    hashtags: contentData.hashtags
+    slides: slidesWithImages.map(slide => ({
+      ...slide,
+      caption: cleanGeneratedText(slide.caption)
+    })),
+    caption: cleanGeneratedText(contentData.mainCaption || ''),
+    hashtags: cleanGeneratedText(contentData.hashtags || '')
   };
 };
 
@@ -925,11 +1107,12 @@ DESIGN REQUIREMENTS:
 export const generateVideo = async (prompt: string, setStatus: (status: string) => void): Promise<string> => {
   const apiKey = getApiKey();
   // Using Hugging Face Inference API for video generation
-  // Using damo-vilab/text-to-video-ms-1.7b for more reliable free generation
-  const model = 'damo-vilab/text-to-video-ms-1.7b';
+  // Note: Video generation via Inference API is limited. Using a model that supports it.
+  const model = 'cerspense/zeroscope_v2_576w';
   const url = `${HF_API_BASE}/${model}`;
 
   setStatus('Initializing video generation...');
+  console.log('Video generation request:', { model, url });
 
   try {
     setStatus('Generating video. This may take several minutes...');
@@ -949,7 +1132,6 @@ CINEMATOGRAPHY SPECIFICATIONS:
 - Visual Storytelling: Compelling narrative through visual elements
 - Professional Standards: Creative Director and Film Director approval level`;
 
-    // Wan2.2 model parameters based on documentation
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -959,8 +1141,7 @@ CINEMATOGRAPHY SPECIFICATIONS:
       body: JSON.stringify({
         inputs: enhancedVideoPrompt,
         parameters: {
-          // Optional: add size parameter for 720P (1280x704 or 704x1280)
-          // size: "1280x704", // Uncomment if model supports this parameter
+          num_inference_steps: 50,
         },
         options: {
           wait_for_model: true,
@@ -971,6 +1152,7 @@ CINEMATOGRAPHY SPECIFICATIONS:
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('Video generation API error:', { status: response.status, statusText: response.statusText, errorText });
       let errorMessage = `Hugging Face API error: ${response.status} ${response.statusText}`;
 
       // Provide helpful error messages
@@ -1044,9 +1226,12 @@ CINEMATOGRAPHY SPECIFICATIONS:
     }
   } catch (error: any) {
     setStatus('Video generation failed');
+    console.error('Video generation fetch error:', error);
 
     // Provide helpful error message
-    if (error.message.includes('503') || error.message.includes('loading')) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      throw new Error('Network error: Unable to connect to Hugging Face API. Please check your internet connection and try again.');
+    } else if (error.message.includes('503') || error.message.includes('loading')) {
       throw new Error('Model is still loading. Please wait a moment and try again. Large video models can take time to initialize.');
     } else if (error.message.includes('404') || error.message.includes('not available')) {
       throw new Error('Video generation via Inference API may not be available for this model. Please check if the model supports Inference API or requires specialized deployment.');
