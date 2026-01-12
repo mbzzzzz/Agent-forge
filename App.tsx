@@ -9,6 +9,7 @@ import MockupStudio from './components/MockupStudio';
 import PosterStudio from './components/PosterStudio';
 import SocialMediaStudio from './components/SocialMediaStudio';
 import VideoStudio from './components/VideoStudio';
+import ImageRemixStudio from './components/ImageRemixStudio';
 import AuthScreen from './components/Auth';
 import AuthCallback from './components/AuthCallback';
 import { useAuth } from './AuthContext';
@@ -190,6 +191,7 @@ const Workspace: React.FC = () => {
       case ModuleId.POSTER: return <PosterStudio />;
       case ModuleId.SOCIAL: return <SocialMediaStudio />;
       case ModuleId.VIDEO: return <VideoStudio />;
+      case ModuleId.REMIX: return <ImageRemixStudio />;
       default: return null;
     }
   };

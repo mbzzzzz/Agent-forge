@@ -19,6 +19,7 @@
     "test:e2e": "npm run test:playwright && npm run test:cypress"
   },
   "dependencies": {
+    "@huggingface/inference": "^4.13.5",
     "@supabase/supabase-js": "^2.47.10",
     "@types/jszip": "^3.4.0",
     "@types/three": "^0.181.0",

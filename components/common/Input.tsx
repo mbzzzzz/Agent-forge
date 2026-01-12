@@ -33,7 +33,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {leftIcon && (
             <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-on-surface-variant/70 group-focus-within/input:text-primary transition-colors duration-200 pointer-events-none flex items-center justify-center">
               <div className="w-5 h-5 flex items-center justify-center">
-                {leftIcon}
+              {leftIcon}
               </div>
             </div>
           )}
@@ -57,7 +57,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {rightIcon && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-on-surface-variant/70 group-focus-within/input:text-primary transition-colors duration-200 pointer-events-none flex items-center justify-center">
               <div className="w-5 h-5 flex items-center justify-center">
-                {rightIcon}
+              {rightIcon}
               </div>
             </div>
           )}

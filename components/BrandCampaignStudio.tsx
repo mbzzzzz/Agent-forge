@@ -57,11 +57,11 @@ const CampaignCard: React.FC<{ campaign: BrandCampaign; onSelect: () => void }> 
         
         <div className="relative z-10">
             <h3 className="text-xl font-bold text-on-surface mb-2 font-display group-hover:text-primary transition-colors">{campaign.title}</h3>
-            <p className="text-on-surface-variant text-sm mb-4 line-clamp-3">{campaign.description}</p>
+        <p className="text-on-surface-variant text-sm mb-4 line-clamp-3">{campaign.description}</p>
             <div className="flex gap-2 flex-wrap">
                 <span className="text-xs px-3 py-1.5 bg-primary-container/80 backdrop-blur-sm text-on-primary-container rounded-md font-medium">
-                    {campaign.targetAudience}
-                </span>
+                {campaign.targetAudience}
+            </span>
                 <span className="text-xs px-3 py-1.5 bg-surface-variant/50 text-on-surface-variant rounded-md font-medium">
                     {campaign.objective}
                 </span>
@@ -253,22 +253,22 @@ const BrandCampaignStudio: React.FC = () => {
                         {errors.brandName && <span className="text-red-400 text-xs">*</span>}
                     </label>
                     <div className="relative">
-                        <input
-                            type="text"
+                    <input
+                        type="text"
                             className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none transition-all ${
                                 errors.brandName 
                                     ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500' 
                                     : 'border-outline/30 focus:ring-primary focus:border-primary'
                             }`}
-                            placeholder="e.g. Acme Co."
-                            value={input.brandName}
+                        placeholder="e.g. Acme Co."
+                        value={input.brandName}
                             onChange={(e) => {
                                 setInput({ ...input, brandName: e.target.value });
                                 if (errors.brandName) {
                                     setErrors({ ...errors, brandName: undefined });
                                 }
                             }}
-                        />
+                    />
                         {input.brandName && !errors.brandName && (
                             <motion.div
                                 initial={{ scale: 0 }}
@@ -319,21 +319,21 @@ const BrandCampaignStudio: React.FC = () => {
                         {errors.products && <span className="text-red-400 text-xs">*</span>}
                     </label>
                     <div className="relative">
-                        <textarea
+                    <textarea
                             className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none h-32 resize-none transition-all ${
                                 errors.products 
                                     ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500' 
                                     : 'border-outline/30 focus:ring-primary focus:border-primary'
                             }`}
-                            placeholder="Describe what you are selling..."
-                            value={input.products}
+                        placeholder="Describe what you are selling..."
+                        value={input.products}
                             onChange={(e) => {
                                 setInput({ ...input, products: e.target.value });
                                 if (errors.products) {
                                     setErrors({ ...errors, products: undefined });
                                 }
                             }}
-                        />
+                    />
                         {input.products && !errors.products && input.products.length >= 10 && (
                             <motion.div
                                 initial={{ scale: 0 }}
@@ -396,15 +396,15 @@ const BrandCampaignStudio: React.FC = () => {
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {campaigns.map((campaign, idx) => (
-                        <CampaignCard
-                            key={idx}
-                            campaign={campaign}
-                            onSelect={() => handleSelectCampaign(campaign)}
-                        />
-                    ))}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {campaigns.map((campaign, idx) => (
+                    <CampaignCard
+                        key={idx}
+                        campaign={campaign}
+                        onSelect={() => handleSelectCampaign(campaign)}
+                    />
+                ))}
+            </div>
             )}
         </div>
     );
@@ -653,7 +653,7 @@ const BrandCampaignStudio: React.FC = () => {
                         ) : videoUrl ? (
                             <GeneratedContentSection title="Campaign Video" icon={Video}>
                                 <div className="relative group">
-                                    <video src={videoUrl} controls className="w-full rounded-lg shadow-lg mb-4" />
+                                <video src={videoUrl} controls className="w-full rounded-lg shadow-lg mb-4" />
                                     <button
                                         onClick={() => openLightbox(videoUrl, 'video')}
                                         className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
@@ -688,21 +688,21 @@ const BrandCampaignStudio: React.FC = () => {
 
     return (
         <>
-            <div className="max-w-7xl mx-auto pb-20">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={step}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
-                    >
-                        {step === 1 && renderStep1()}
-                        {step === 2 && renderStep2()}
-                        {step === 3 && renderStep3()}
-                    </motion.div>
-                </AnimatePresence>
-            </div>
+        <div className="max-w-7xl mx-auto pb-20">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={step}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    {step === 1 && renderStep1()}
+                    {step === 2 && renderStep2()}
+                    {step === 3 && renderStep3()}
+                </motion.div>
+            </AnimatePresence>
+        </div>
             <Lightbox
                 isOpen={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}

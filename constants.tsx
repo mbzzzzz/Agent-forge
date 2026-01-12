@@ -1,6 +1,6 @@
 import React from 'react';
 import { CreativeModule, ModuleId } from './types';
-import { SwatchBook, Smartphone, Image, Share2, Clapperboard, Target } from 'lucide-react';
+import { SwatchBook, Smartphone, Image, Share2, Clapperboard, Target, Sparkles } from 'lucide-react';
 
 
 // FIX: Export MockupIcon to be used as a placeholder in MockupStudio
@@ -12,7 +12,8 @@ export const CREATIVE_MODULES: CreativeModule[] = [
   { id: ModuleId.MOCKUP, name: "Product Mockup Generator", description: "Create photorealistic product mockups", icon: Smartphone },
   { id: ModuleId.POSTER, name: "AI Poster Designer", description: "Design stunning posters for any event", icon: Image },
   { id: ModuleId.SOCIAL, name: "Social Media Creator", description: "Generate content with images and captions", icon: Share2 },
-  { id: ModuleId.VIDEO, name: "AI Video Creator", description: "Produce professional videos with Veo", icon: Clapperboard },
+  { id: ModuleId.VIDEO, name: "AI Video Creator", description: "Produce professional videos with Zeroscope", icon: Clapperboard },
+  { id: ModuleId.REMIX, name: "AI Image Remix", description: "Transform and remix images with Flux", icon: Sparkles },
 ];
 
 

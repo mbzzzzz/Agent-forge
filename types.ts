@@ -14,6 +14,7 @@ export enum ModuleId {
   POSTER = "poster_design_studio",
   SOCIAL = "social_media_studio",
   VIDEO = "video_studio",
+  REMIX = "image_remix_studio",
 }
 
 
