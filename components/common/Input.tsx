@@ -31,7 +31,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         <div className="relative group/input">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 group-focus-within/input:text-primary transition-colors duration-200">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-on-surface-variant/70 group-focus-within/input:text-primary transition-colors duration-200 pointer-events-none">
               {leftIcon}
             </div>
           )}
@@ -48,12 +48,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={`w-full bg-surface-variant/20 border rounded-xl py-3.5 text-white placeholder-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 focus:bg-surface-variant/40 transition-all duration-300 backdrop-blur-md ${hasError
                 ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50'
                 : 'border-outline/30 hover:border-outline/50'
-              } ${maxLength && currentLength >= maxLength * 0.9 ? 'border-yellow-500/50' : ''} ${leftIcon ? 'pl-12' : 'pl-4'
-              } ${rightIcon ? 'pr-12' : 'pr-4'} ${className}`}
+              } ${maxLength && currentLength >= maxLength * 0.9 ? 'border-yellow-500/50' : ''} ${leftIcon ? 'pl-14' : 'pl-4'
+              } ${rightIcon ? 'pr-14' : 'pr-4'} ${className}`}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant/70 group-focus-within/input:text-primary transition-colors duration-200">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-on-surface-variant/70 group-focus-within/input:text-primary transition-colors duration-200 pointer-events-none">
               {rightIcon}
             </div>
           )}

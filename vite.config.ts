@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    // Support both HF_TOKEN and VITE_HF_TOKEN for better compatibility
+    const hfToken = env.HF_TOKEN || env.VITE_HF_TOKEN || '';
     return {
       server: {
         port: 3000,
@@ -11,8 +13,8 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.HF_TOKEN),
-        'process.env.HF_TOKEN': JSON.stringify(env.HF_TOKEN)
+        'process.env.API_KEY': JSON.stringify(hfToken),
+        'process.env.HF_TOKEN': JSON.stringify(hfToken)
       },
       resolve: {
         alias: {

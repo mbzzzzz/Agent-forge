@@ -12,7 +12,7 @@ const getApiKey = (): string => {
     }
   }
 
-  // Fall back to process.env.API_KEY (set via vite.config.ts)
+  // Fall back to process.env.API_KEY or process.env.HF_TOKEN (set via vite.config.ts)
   const envKey = process.env.API_KEY || process.env.HF_TOKEN;
   if (envKey) return envKey;
 
@@ -369,8 +369,11 @@ export const generatePoster = async (posterType: string, theme: string): Promise
 };
 
 // Social Media Studio
-export const generateSocialPost = async (platform: string, theme: string): Promise<{ image: string, caption: string, hashtags: string }> => {
-  const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring.`;
+export const generateSocialPost = async (platform: string, theme: string, brandName?: string): Promise<{ image: string, caption: string, hashtags: string }> => {
+  // Extract brand name from theme if it contains brand info
+  const brandNameToUse = brandName || (theme.includes(' - ') ? theme.split(' - ')[0] : null);
+  
+  const imagePrompt = `${platform} social media post. Theme: ${theme}. Style: Lifestyle photography, engaging and authentic. Color palette: vibrant and warm. Mood: positive and inspiring.${brandNameToUse ? ` Brand: ${brandNameToUse}.` : ''}`;
 
   const aspectRatio = platform === 'Instagram Stories' ? '9:16' : '1:1';
   const dimensions = aspectRatio === '9:16' ? { width: 864, height: 1536 } : { width: 1024, height: 1024 };
@@ -381,10 +384,14 @@ export const generateSocialPost = async (platform: string, theme: string): Promi
     useCase: 'social',
   });
 
-  const captionPrompt = `You are a Social Media Copywriter. Write an engaging ${platform} caption for a post about "${theme}". Include a strong hook, provide value, and end with a call-to-action. Return only the caption text, no additional formatting.`;
+  const brandInstruction = brandNameToUse 
+    ? `IMPORTANT: Always use the brand name "${brandNameToUse}" with correct spelling throughout. `
+    : '';
+  
+  const captionPrompt = `You are a Social Media Copywriter. Write an engaging ${platform} caption for a post about "${theme}". ${brandInstruction}Include a strong hook, provide value, and end with a call-to-action. Ensure all spelling is correct, especially for brand names. Return only the caption text, no additional formatting.`;
   const caption = await generateText(captionPrompt);
 
-  const hashtagPrompt = `You are a Hashtag Specialist. Generate a mix of 10 relevant hashtags for a ${platform} post about "${theme}". Mix high-volume, medium-volume, and niche hashtags. Return only the hashtags separated by spaces, no additional text.`;
+  const hashtagPrompt = `You are a Hashtag Specialist. Generate a mix of 10 relevant hashtags for a ${platform} post about "${theme}".${brandNameToUse ? ` Include hashtags related to the brand "${brandNameToUse}".` : ''} Mix high-volume, medium-volume, and niche hashtags. Return only the hashtags separated by spaces, no additional text.`;
   const hashtags = await generateText(hashtagPrompt);
 
   return {
@@ -398,17 +405,22 @@ export const generateSocialPost = async (platform: string, theme: string): Promi
 export const generateCampaignIdeas = async (input: CampaignInput): Promise<BrandCampaign[]> => {
   console.log('Generating campaign ideas for:', input);
   const prompt = `You are a Senior Marketing Strategist. Create 5 distinct marketing campaign concepts for:
-    Brand: "${input.brandName}"
-    Tone: "${input.tone}"
+    Brand Name: "${input.brandName}" (IMPORTANT: Always use this exact brand name spelling throughout all responses)
+    Brand Tone: "${input.tone}"
     Target Audience: "${input.targetAudience}"
-    Products: "${input.products}"
+    Products/Services: "${input.products}"
+
+    CRITICAL INSTRUCTIONS:
+    - Always spell the brand name "${input.brandName}" exactly as provided above. Do not modify, abbreviate, or change the spelling.
+    - Use the brand name "${input.brandName}" consistently in all campaign titles, descriptions, and messages.
+    - Ensure all text is grammatically correct and professionally written.
 
     For each campaign, provide:
-    1. A catchy "title".
-    2. A short "description".
+    1. A catchy "title" (must include the brand name "${input.brandName}").
+    2. A short "description" (must include the brand name "${input.brandName}").
     3. The main "objective".
     4. The specific "targetAudience" segment.
-    5. The "keyMessage".
+    5. The "keyMessage" (must include the brand name "${input.brandName}").
 
     Return ONLY a valid JSON array of objects, where each object has keys: "title", "description", "objective", "targetAudience", "keyMessage".
     Return ONLY valid JSON, no markdown formatting.`;
@@ -432,18 +444,29 @@ export const generateCampaignIdeas = async (input: CampaignInput): Promise<Brand
   }
 };
 
-export const generateCarouselPost = async (campaign: BrandCampaign, theme: string): Promise<CarouselPost> => {
+export const generateCarouselPost = async (campaign: BrandCampaign, theme: string, brandName?: string): Promise<CarouselPost> => {
   console.log('Generating carousel post for campaign:', campaign.title);
+
+  // Extract brand name from campaign if not provided
+  const brandNameToUse = brandName || campaign.title.split(' ')[0];
 
   // 1. Generate Content Structure
   const contentPrompt = `Create a 5-slide Instagram carousel post for the campaign "${campaign.title}" with the theme "${theme}".
     Key Message: "${campaign.keyMessage}"
+    Brand Name: "${brandNameToUse}" (IMPORTANT: Always use this exact brand name spelling - "${brandNameToUse}")
+    
+    CRITICAL INSTRUCTIONS:
+    - Always spell the brand name "${brandNameToUse}" exactly as provided. Do not modify, abbreviate, or change the spelling.
+    - Include the brand name "${brandNameToUse}" naturally in the caption and ensure correct spelling.
+    - Ensure all text is grammatically correct, engaging, and optimized for Instagram.
+    - Create hashtags that are relevant to the brand "${brandNameToUse}" and campaign theme.
+    - Make the caption engaging with a strong hook, valuable content, and a clear call-to-action.
     
     Return a valid JSON object with:
-    1. "slides": An array of 5 objects, each with "imageDescription" (for AI generation) and "caption" (text overlay or caption).
-    2. "mainCaption": The post caption.
-    3. "hashtags": A string of hashtags.
-    Return ONLY valid JSON.`;
+    1. "slides": An array of 5 objects, each with "imageDescription" (detailed description for AI image generation) and "caption" (short text for the slide, max 50 characters).
+    2. "mainCaption": A complete Instagram post caption (150-300 words) that includes the brand name "${brandNameToUse}" with correct spelling, has a strong hook, provides value, and includes a call-to-action.
+    3. "hashtags": A string of 10-15 relevant hashtags separated by spaces, including brand-specific and campaign-related hashtags.
+    Return ONLY valid JSON, no markdown formatting.`;
 
   let contentData;
   try {

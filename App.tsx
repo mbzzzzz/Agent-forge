@@ -83,7 +83,7 @@ const Sidebar: React.FC<{
         ))}
       </nav>
 
-      <div className="mt-auto space-y-4">
+      <div className="mt-auto">
         <button
           onClick={logout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
@@ -91,11 +91,6 @@ const Sidebar: React.FC<{
           <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           <span className="font-semibold text-sm">Sign Out</span>
         </button>
-
-        <div className="text-center text-on-surface-variant/40 text-xs px-4 pb-4 border-t border-outline/20 pt-4">
-          <p>Powered by Hugging Face</p>
-          <p className="mt-1">Built with Supabase</p>
-        </div>
       </div>
     </aside>
   );
