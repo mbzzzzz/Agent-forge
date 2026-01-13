@@ -6,7 +6,8 @@ import ApiKeySelector from './common/ApiKeySelector';
 import { DownloadAction, ShareAction } from './common/ActionButtons';
 import { useApiKey } from '../hooks/useApiKey';
 import { useToastContext } from '../contexts/ToastContext';
-import { RotateCcw, Sparkles, Video } from 'lucide-react';
+import { RotateCcw, Sparkles, Video, Wand2 } from 'lucide-react';
+import EnhancePromptButton from './common/EnhancePromptButton';
 
 const VideoStudio: React.FC = () => {
   const { isKeyAvailable, isChecking } = useApiKey();
@@ -81,11 +82,18 @@ const VideoStudio: React.FC = () => {
         {/* Input Section */}
         <div className="space-y-6">
           <div className="bg-glass backdrop-blur-[var(--glass-blur)] border var(--glass-border) p-6 rounded-2xl shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Video className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                  <Video className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold font-display text-on-surface">Video Request</h3>
               </div>
-              <h3 className="text-xl font-bold font-display text-on-surface">Video Request</h3>
+              <EnhancePromptButton
+                prompt={prompt}
+                onEnhanced={setPrompt}
+                useCase="general"
+              />
             </div>
 
             <div className="relative">

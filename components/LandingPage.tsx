@@ -90,7 +90,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn }) => 
                         <FeatureCard
                             icon={BarChart3}
                             title="Campaign Architect"
-                            description="Elite-level marketing strategy on demand. Llama 3 powered campaign concepts and high-engagement social kits."
+                            description="Elite-level marketing strategy on demand. Claude 3.5 Haiku powered campaign concepts and high-engagement social kits."
                             delay={0.2}
                         />
                         <FeatureCard

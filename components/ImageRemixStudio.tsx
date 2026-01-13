@@ -9,7 +9,8 @@ import { useApiKey } from '../hooks/useApiKey';
 import ApiKeySelector from './common/ApiKeySelector';
 import { useToastContext } from '../contexts/ToastContext';
 import { TooltipIcon } from './common/Tooltip';
-import { RotateCcw, Upload, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { RotateCcw, Upload, Image as ImageIcon, Sparkles, Wand2 } from 'lucide-react';
+import EnhancePromptButton from './common/EnhancePromptButton';
 
 const ImageRemixStudio: React.FC = () => {
     const { isKeyAvailable, isChecking } = useApiKey();
@@ -156,9 +157,16 @@ const ImageRemixStudio: React.FC = () => {
                     </div>
 
                     <div>
-                        <label htmlFor="remix-prompt" className="block text-sm font-medium text-on-surface-variant mb-2">
-                            Transformation Prompt <span className="text-red-400" aria-label="required">*</span>
-                        </label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label htmlFor="remix-prompt" className="block text-sm font-medium text-on-surface-variant">
+                                Transformation Prompt <span className="text-red-400" aria-label="required">*</span>
+                            </label>
+                            <EnhancePromptButton
+                                prompt={prompt}
+                                onEnhanced={setPrompt}
+                                useCase="remix"
+                            />
+                        </div>
                         <textarea
                             id="remix-prompt"
                             value={prompt}

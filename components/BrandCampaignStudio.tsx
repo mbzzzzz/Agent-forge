@@ -10,6 +10,7 @@ import ProgressIndicator from './common/ProgressIndicator';
 import SkeletonLoader from './common/SkeletonLoader';
 import Lightbox from './common/Lightbox';
 import CarouselDownload from './common/CarouselDownload';
+import EnhancePromptButton from './common/EnhancePromptButton';
 
 // --- Constants ---
 
@@ -262,8 +263,8 @@ const BrandCampaignStudio: React.FC = () => {
                         <input
                             type="text"
                             className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none transition-all ${errors.brandName
-                                    ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500'
-                                    : 'border-outline/30 focus:ring-primary focus:border-primary'
+                                ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500'
+                                : 'border-outline/30 focus:ring-primary focus:border-primary'
                                 }`}
                             placeholder="e.g. Acme Co."
                             value={input.brandName}
@@ -319,15 +320,22 @@ const BrandCampaignStudio: React.FC = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-on-surface-variant mb-2 flex items-center gap-2">
-                        Products / Services
-                        {errors.products && <span className="text-red-400 text-xs">*</span>}
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-on-surface-variant flex items-center gap-2">
+                            Products / Services
+                            {errors.products && <span className="text-red-400 text-xs">*</span>}
+                        </label>
+                        <EnhancePromptButton
+                            prompt={input.products}
+                            onEnhanced={(val) => setInput({ ...input, products: val })}
+                            useCase="brand-asset"
+                        />
+                    </div>
                     <div className="relative">
                         <textarea
                             className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none h-32 resize-none transition-all ${errors.products
-                                    ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500'
-                                    : 'border-outline/30 focus:ring-primary focus:border-primary'
+                                ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500'
+                                : 'border-outline/30 focus:ring-primary focus:border-primary'
                                 }`}
                             placeholder="Describe what you are selling..."
                             value={input.products}
@@ -383,7 +391,7 @@ const BrandCampaignStudio: React.FC = () => {
                 </Button>
                 <div>
                     <h2 className="text-2xl font-display font-bold text-on-surface">Select a Concept</h2>
-                    <p className="text-on-surface-variant text-sm">We generated 5 campaigns based on your profile.</p>
+                    <p className="text-on-surface-variant text-sm">We generated 3 campaigns based on your profile.</p>
                 </div>
             </div>
 
@@ -395,7 +403,7 @@ const BrandCampaignStudio: React.FC = () => {
 
             {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Array.from({ length: 5 }).map((_, idx) => (
+                    {Array.from({ length: 3 }).map((_, idx) => (
                         <SkeletonLoader key={idx} variant="card" />
                     ))}
                 </div>

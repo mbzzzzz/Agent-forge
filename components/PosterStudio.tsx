@@ -12,7 +12,8 @@ import { useApiKey } from '../hooks/useApiKey';
 import ApiKeySelector from './common/ApiKeySelector';
 import { useToastContext } from '../contexts/ToastContext';
 import { TooltipIcon } from './common/Tooltip';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Wand2, Sparkles } from 'lucide-react';
+import EnhancePromptButton from './common/EnhancePromptButton';
 
 const PosterStudio: React.FC = () => {
     const { isKeyAvailable, isChecking } = useApiKey();
@@ -25,7 +26,7 @@ const PosterStudio: React.FC = () => {
     const [headline, setHeadline] = useState('Summer Fest');
     const [subheadline, setSubheadline] = useState('Three Days of Music & Sun');
     const savedInputsRef = useRef({ posterType, theme, headline, subheadline });
-    
+
     const MAX_THEME_LENGTH = 400;
     const MAX_HEADLINE_LENGTH = 50;
     const MAX_SUBHEADLINE_LENGTH = 100;
@@ -36,14 +37,14 @@ const PosterStudio: React.FC = () => {
             setError('Please select a poster type and provide a theme.');
             return;
         }
-        
+
         if (theme.trim().length < 10) {
             setError('Theme description must be at least 10 characters long.');
             return;
         }
-        
+
         savedInputsRef.current = { posterType, theme, headline, subheadline };
-        
+
         setIsLoading(true);
         setError(null);
         try {
@@ -59,12 +60,12 @@ const PosterStudio: React.FC = () => {
             console.error('Poster generation error:', e);
             const errorMessage = e?.message || e?.toString() || 'Unknown error occurred';
             console.error('Error details:', { message: errorMessage, error: e });
-            
+
             if (errorMessage.includes('API key')) {
                 setError('API key is required. Please set HF_TOKEN environment variable or select an API key.');
             } else {
-                const errorMsg = errorMessage.length > 100 
-                    ? 'Failed to generate poster. Please check your API key and try again.' 
+                const errorMsg = errorMessage.length > 100
+                    ? 'Failed to generate poster. Please check your API key and try again.'
                     : errorMessage;
                 setError(errorMsg);
             }
@@ -72,12 +73,12 @@ const PosterStudio: React.FC = () => {
             setIsLoading(false);
         }
     };
-    
+
     const handleRegenerate = () => {
         setGeneratedImage(null);
         handleGenerate();
     };
-    
+
     if (isChecking) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -85,7 +86,7 @@ const PosterStudio: React.FC = () => {
             </div>
         );
     }
-    
+
     if (!isKeyAvailable) {
         return <ApiKeySelector onKeySelected={() => window.location.reload()} />;
     }
@@ -102,9 +103,9 @@ const PosterStudio: React.FC = () => {
                         <label htmlFor="poster-type" className="block text-sm font-medium text-on-surface-variant mb-2">
                             Poster Type
                         </label>
-                        <Select 
+                        <Select
                             id="poster-type"
-                            value={posterType} 
+                            value={posterType}
                             onChange={e => setPosterType(e.target.value)}
                             aria-label="Select poster type"
                         >
@@ -112,9 +113,16 @@ const PosterStudio: React.FC = () => {
                         </Select>
                     </div>
                     <div>
-                        <label htmlFor="poster-theme" className="block text-sm font-medium text-on-surface-variant mb-2">
-                            Theme / Concept
-                        </label>
+                        <div className="flex items-center justify-between mb-2">
+                            <label htmlFor="poster-theme" className="block text-sm font-medium text-on-surface-variant">
+                                Theme / Concept
+                            </label>
+                            <EnhancePromptButton
+                                prompt={theme}
+                                onEnhanced={setTheme}
+                                useCase="poster"
+                            />
+                        </div>
                         <textarea
                             id="poster-theme"
                             value={theme}
@@ -127,33 +135,31 @@ const PosterStudio: React.FC = () => {
                             placeholder="Example: A vibrant summer music festival poster with retro 80s aesthetics. Think neon colors (pink, cyan, yellow), geometric patterns, bold sans-serif typography, and playful illustrations of music notes and disco balls. High energy visual style with a warm color palette."
                             aria-describedby="theme-helper theme-counter"
                             maxLength={MAX_THEME_LENGTH}
-                            className={`w-full bg-surface-variant/40 border rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none transition ${
-                                error && error.includes('theme') ? 'border-red-500/50' : 'border-outline/50'
-                            } ${theme.length >= MAX_THEME_LENGTH * 0.9 ? 'border-yellow-500/50' : ''}`}
+                            className={`w-full bg-surface-variant/40 border rounded-md px-4 py-3 text-white placeholder-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary h-28 resize-none transition ${error && error.includes('theme') ? 'border-red-500/50' : 'border-outline/50'
+                                } ${theme.length >= MAX_THEME_LENGTH * 0.9 ? 'border-yellow-500/50' : ''}`}
                             rows={4}
                         />
                         <div className="flex items-center justify-between mt-1">
                             <p id="theme-helper" className="text-xs text-on-surface-variant/70">
                                 Describe visual style, mood, and key elements (min. 10 characters)
                             </p>
-                            <p 
+                            <p
                                 id="theme-counter"
-                                className={`text-xs ml-auto ${
-                                    theme.length >= MAX_THEME_LENGTH 
-                                        ? 'text-red-400' 
-                                        : theme.length >= MAX_THEME_LENGTH * 0.9 
-                                        ? 'text-yellow-400' 
-                                        : 'text-on-surface-variant/70'
-                                }`}
+                                className={`text-xs ml-auto ${theme.length >= MAX_THEME_LENGTH
+                                        ? 'text-red-400'
+                                        : theme.length >= MAX_THEME_LENGTH * 0.9
+                                            ? 'text-yellow-400'
+                                            : 'text-on-surface-variant/70'
+                                    }`}
                             >
                                 {theme.length}/{MAX_THEME_LENGTH}
                             </p>
                         </div>
                     </div>
-                     <div>
-                        <Input 
+                    <div>
+                        <Input
                             label="Headline Text"
-                            value={headline} 
+                            value={headline}
                             onChange={e => {
                                 if (e.target.value.length <= MAX_HEADLINE_LENGTH) {
                                     setHeadline(e.target.value);
@@ -165,10 +171,10 @@ const PosterStudio: React.FC = () => {
                             showCharCount
                         />
                     </div>
-                     <div>
-                        <Input 
+                    <div>
+                        <Input
                             label="Subheadline Text"
-                            value={subheadline} 
+                            value={subheadline}
                             onChange={e => {
                                 if (e.target.value.length <= MAX_SUBHEADLINE_LENGTH) {
                                     setSubheadline(e.target.value);
@@ -190,7 +196,7 @@ const PosterStudio: React.FC = () => {
                 {!isLoading && !generatedImage && !error && (
                     <div className="text-center text-on-surface-variant/70">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-24 h-24 mx-auto mb-4">
-                           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12M3.75 3h16.5v11.25c0 1.242-.99 2.25-2.218 2.25H6.982c-.524 0-1.028.16-1.455.43A3.75 3.75 0 003 20.25V3.75" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12M3.75 3h16.5v11.25c0 1.242-.99 2.25-2.218 2.25H6.982c-.524 0-1.028.16-1.455.43A3.75 3.75 0 003 20.25V3.75" />
                         </svg>
                         <h3 className="text-xl font-semibold font-display">Your poster will appear here</h3>
                         <p>Fill in the details and unleash your creativity</p>
@@ -201,8 +207,8 @@ const PosterStudio: React.FC = () => {
                         <div className="relative w-full h-full shadow-2xl group flex-1">
                             <img src={generatedImage} alt="Generated Poster" className="w-full h-full object-cover rounded-md" />
                             <div className="absolute inset-0 flex flex-col justify-between p-8 md:p-12 text-white bg-gradient-to-t from-black/50 to-transparent pointer-events-none">
-                               <h1 className="text-4xl md:text-6xl font-extrabold font-display text-center" style={{textShadow: '2px 2px 8px rgba(0,0,0,0.7)'}}>{headline}</h1>
-                               <h2 className="text-xl md:text-2xl font-semibold text-center" style={{textShadow: '1px 1px 6px rgba(0,0,0,0.7)'}}>{subheadline}</h2>
+                                <h1 className="text-4xl md:text-6xl font-extrabold font-display text-center" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}>{headline}</h1>
+                                <h2 className="text-xl md:text-2xl font-semibold text-center" style={{ textShadow: '1px 1px 6px rgba(0,0,0,0.7)' }}>{subheadline}</h2>
                             </div>
                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DownloadAction dataUrl={generatedImage} filename={`${headline.replace(/\s+/g, '-')}-poster.jpg`} />
@@ -221,7 +227,7 @@ const PosterStudio: React.FC = () => {
                     </div>
                 )}
                 {error && !isLoading && (
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="absolute inset-0 flex items-center justify-center z-50"
@@ -233,7 +239,7 @@ const PosterStudio: React.FC = () => {
                             </div>
                             <p className="text-sm mb-4">{error}</p>
                             <div className="flex gap-3">
-                                <Button 
+                                <Button
                                     onClick={() => {
                                         setError(null);
                                         if (savedInputsRef.current.theme) {
@@ -247,7 +253,7 @@ const PosterStudio: React.FC = () => {
                                 >
                                     Edit & Retry
                                 </Button>
-                                <Button 
+                                <Button
                                     onClick={handleGenerate}
                                     className="flex-1"
                                 >

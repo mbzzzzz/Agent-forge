@@ -1,6 +1,7 @@
 import { BrandIdentity, ColorPalette, Typography, BrandCampaign, CarouselPost, CampaignInput } from "../types";
 import { InferenceClient } from "@huggingface/inference";
-import { generateText as generateGroqText, improveImagePrompt } from "./groqService";
+import { generateText as generateAnthropicText, improveImagePrompt } from "./anthropicService";
+export { improveImagePrompt };
 
 const getApiKey = (): string => {
   const hfToken = process.env.HF_TOKEN;
@@ -99,9 +100,9 @@ function cleanGeneratedText(text: string): string {
   return cleaned;
 }
 
-// Helper function for text generation - NOW USING GROQ
-async function generateText(prompt: string, model: string = 'llama3-70b-8192', maxTokens: number = 2000): Promise<string> {
-  return generateGroqText(prompt, model, maxTokens);
+// Helper function for text generation - NOW USING ANTHROPIC
+async function generateText(prompt: string, model: string = 'claude-3-5-haiku-20241022', maxTokens: number = 2000): Promise<string> {
+  return generateAnthropicText(prompt, model, maxTokens);
 }
 
 // Prompt enhancement function based on use case
@@ -145,7 +146,7 @@ function getNegativePromptForUseCase(useCase: 'logo' | 'mockup' | 'poster' | 'so
   return `${baseNegative}, ${specificNegative}`;
 }
 
-// Helper function for image generation - NOW USING FLUX AND GROQ IMPROVEMENT
+// Helper function for image generation - NOW USING FLUX AND ANTHROPIC IMPROVEMENT
 async function generateImage(
   prompt: string,
   options?: {
@@ -160,13 +161,13 @@ async function generateImage(
   const client = getHfClient();
   const model = 'black-forest-labs/FLUX.1-dev';
 
-  // Enhanced prompt with Groq real-time improvement
+  // Enhanced prompt with Anthropic real-time improvement
   const useCase = options?.useCase || 'general';
 
-  // Real-time prompt improvement using Groq
+  // Real-time prompt improvement using Anthropic
   let enhancedPrompt = prompt;
   if (!options?.skipImprovement) {
-    console.log(`Improving ${useCase} prompt with Groq...`);
+    console.log(`Improving ${useCase} prompt with Anthropic...`);
     enhancedPrompt = await improveImagePrompt(prompt, useCase);
     console.log('Improved prompt:', enhancedPrompt);
   }
@@ -255,10 +256,10 @@ export async function generateImageToImage(
 
   const useCase = options?.useCase || 'general';
 
-  // Real-time prompt improvement using Groq
+  // Real-time prompt improvement using Anthropic
   let enhancedPrompt = prompt;
   if (!options?.skipImprovement) {
-    console.log(`Improving ${useCase} image-to-image prompt with Groq...`);
+    console.log(`Improving ${useCase} image-to-image prompt with Anthropic...`);
     enhancedPrompt = await improveImagePrompt(prompt, useCase);
     console.log('Improved prompt:', enhancedPrompt);
   }
@@ -344,7 +345,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 - No markdown headers, bold, italic, or list formatting`;
 
   try {
-    const text = await generateText(prompt, 'llama3-70b-8192', 1500);
+    const text = await generateText(prompt, 'claude-3-5-haiku-20241022', 1500);
     console.log('Brand identity response received');
 
     // Try to extract JSON from the response (in case model wraps it in markdown)
@@ -370,7 +371,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 export const generateLogo = async (brandName: string, industry: string, style: string): Promise<string> => {
   console.log('Generating logo for:', brandName, industry, style);
   try {
-    // We pass the raw info to generateImage, which will use Groq to expand it into a professional logo prompt
+    // We pass the raw info to generateImage, which will use Anthropic to expand it into a professional logo prompt
     const base64Image = await generateImage(`Logo for a ${brandName} company in the ${industry} industry. Style: ${style}`, {
       width: 1024,
       height: 1024,
@@ -631,7 +632,7 @@ export const generateSocialPost = async (platform: string, theme: string, brandN
   - Write like a real person talking to a friend or customer.
   - Return ONLY the caption text.`;
 
-  const caption = await generateText(captionPrompt, 'llama3-70b-8192', 500);
+  const caption = await generateText(captionPrompt, 'claude-3-5-haiku-20241022', 500);
 
   const hashtagPrompt = `You are a Social Media Strategist specializing in hashtag research and optimization. You've increased reach by 300%+ for major brands through strategic hashtag use.
 
@@ -689,7 +690,7 @@ export const generateCampaignIdeas = async (input: CampaignInput): Promise<Brand
   console.log('Generating campaign ideas for:', input);
   const prompt = `You are a Chief Marketing Officer and Creative Strategist with 20+ years of experience launching award-winning campaigns for Fortune 500 companies. Your campaigns have won Cannes Lions, Clios, and driven millions in revenue.
 
-TASK: Create 5 distinct, world-class marketing campaign concepts that would impress a Creative Director and Marketing VP.
+TASK: Create 3 distinct, world-class marketing campaign concepts that would impress a Creative Director and Marketing VP.
 
 BRAND BRIEF:
 - Brand Name: "${input.brandName}" (CRITICAL: Always use this EXACT spelling - "${input.brandName}" - never modify, abbreviate, or change it)
@@ -746,7 +747,7 @@ QUALITY STANDARDS:
 - Industry-leading campaign concepts
 
 OUTPUT FORMAT:
-Return ONLY a valid JSON array of exactly 5 objects. Each object must have these exact keys:
+Return ONLY a valid JSON array of exactly 3 objects. Each object must have these exact keys:
 "title", "description", "objective", "targetAudience", "keyMessage"
 
 CRITICAL OUTPUT REQUIREMENTS:
