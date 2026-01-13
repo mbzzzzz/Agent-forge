@@ -139,3 +139,39 @@ export async function generateText(
         throw error;
     }
 }
+
+/**
+ * Uses Groq to improve a simple image prompt for high-quality Flux generation.
+ */
+export async function improveImagePrompt(
+    basePrompt: string,
+    useCase: 'logo' | 'mockup' | 'poster' | 'social' | 'carousel' | 'brand-asset' | 'general' | 'remix' = 'general'
+): Promise<string> {
+    const prompt = `You are an expert AI Prompt Engineer specializing in Flux and Stable Diffusion. 
+    Your task is to take a simple user description and expand it into a high-quality, detailed prompt for image generation.
+
+    USER INPUT: "${basePrompt}"
+    USE CASE: ${useCase}
+
+    REQUIREMENTS:
+    - Expand the input into a detailed, descriptive prompt (75-150 words).
+    - Include details about: composition, lighting (e.g., cinematic, studio, soft), texture, colors, and camera angle.
+    - Tailor the prompt specifically for the "${useCase}" use case.
+    - ALWAYS Include quality buzzwords like "hyper realistic", "8k graphics", "ultra detailed", and "masterpiece" to ensure the highest fidelity.
+    - DO NOT include any introductory text or explanations.
+    - Return ONLY the improved prompt text.
+    - For logos: focus on vector style, clean lines, and negative space.
+    - For mockups: focus on depth of field, product texture, and professional studio setup.
+    - For posters: focus on layout, typography placement, and strong visual hierarchy.
+
+    IMPROVED PROMPT:`;
+
+    try {
+        const improved = await generateText(prompt, 'llama3-70b-8192', 500);
+        return improved;
+    } catch (error) {
+        console.error('Failed to improve prompt with Groq, using base prompt:', error);
+        return basePrompt;
+    }
+}
+

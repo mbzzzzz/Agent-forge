@@ -6,6 +6,7 @@ import Input from './common/Input';
 import { LogIn, UserPlus } from 'lucide-react';
 import iconImage from '../assets/icon.png';
 import { ShaderAnimation } from './ui/shader-animation';
+import AgentForgeLogo from './common/AgentForgeLogo';
 
 const GoogleIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 48 48">
@@ -72,8 +73,8 @@ const AuthForm: React.FC<{ isSignUp: boolean }> = ({ isSignUp }) => {
 
 
 
-const AuthScreen: React.FC = () => {
-    const [isSignUp, setIsSignUp] = useState(false);
+const AuthScreen: React.FC<{ initialIsSignUp?: boolean }> = ({ initialIsSignUp = false }) => {
+    const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
     const { loginWithGoogle, loading, error, message, clearError, clearMessage } = useAuth();
 
     return (
@@ -109,11 +110,7 @@ const AuthScreen: React.FC = () => {
                             className="inline-block mb-6"
                         >
                             <div className="bg-primary/20 p-4 rounded-2xl inline-block border border-primary/20 shadow-[0_0_20px_rgba(var(--primary-rgb),0.2)]">
-                                <img
-                                    src={iconImage}
-                                    alt="AgentForge"
-                                    className="w-12 h-12 object-contain"
-                                />
+                                <AgentForgeLogo className="w-12 h-12" />
                             </div>
                         </motion.div>
                         <h1 className="text-4xl font-bold font-display text-on-surface mb-3 tracking-tight">

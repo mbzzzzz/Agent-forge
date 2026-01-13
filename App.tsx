@@ -246,9 +246,59 @@ const Workspace: React.FC = () => {
 }
 
 
+import LandingPage from './components/LandingPage';
+
+const WelcomeScreen: React.FC<{ userEmail: string; onComplete: () => void }> = ({ userEmail, onComplete }) => {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 3500);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <div className="h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <ShaderAnimation intensity={0.8} speed={1.2} />
+      </div>
+      <div className="absolute inset-0 bg-background/40 backdrop-blur-sm z-1"></div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative z-10 text-center px-6"
+      >
+        <div className="bg-primary/20 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-primary/30 shadow-[0_0_40px_rgba(var(--primary-rgb),0.3)]">
+          <AgentForgeLogo className="w-10 h-10" />
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold font-display text-on-surface mb-4 tracking-tight">
+          Welcome back, {userEmail.split('@')[0]}
+        </h1>
+        <p className="text-xl text-on-surface-variant max-w-md mx-auto leading-relaxed italic">
+          "Ready to turn your creative thoughts into actual content?"
+        </p>
+
+        <motion.div
+          className="mt-12 h-1 w-48 bg-white/10 mx-auto rounded-full overflow-hidden"
+          initial={{ width: 0 }}
+          animate={{ width: 192 }}
+        >
+          <motion.div
+            className="h-full bg-primary"
+            initial={{ x: '-100%' }}
+            animate={{ x: '100%' }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          />
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const { user, loading } = useAuth();
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const [view, setView] = useState<'landing' | 'auth'>('landing');
+  const [authIsSignUp, setAuthIsSignUp] = useState(false);
+  const [hasWelcomed, setHasWelcomed] = useState(false);
 
   // Debug logging
   useEffect(() => {
@@ -260,20 +310,11 @@ const App: React.FC = () => {
     const handleLocationChange = () => {
       setCurrentPath(window.location.pathname);
     };
-
-    // Listen to popstate for browser back/forward
     window.addEventListener('popstate', handleLocationChange);
-
-    // Also check on initial load and when hash changes (for OAuth callbacks)
     handleLocationChange();
-
-    return () => {
-      window.removeEventListener('popstate', handleLocationChange);
-    };
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
-  // Handle OAuth callback route - check both pathname and query params
-  // Only show AuthCallback if we're on the callback path OR have auth params AND not loading
   const urlParams = new URLSearchParams(window.location.search);
   const hasAuthCode = urlParams.has('code') || window.location.hash.includes('access_token') || window.location.hash.includes('code');
   const isCallbackRoute = currentPath === '/auth/callback' || (hasAuthCode && !loading);
@@ -284,8 +325,11 @@ const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-background">
-        <div className="text-on-surface-variant">Loading...</div>
+      <div className="h-screen w-full flex items-center justify-center bg-background relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <ShaderAnimation intensity={0.2} speed={0.4} />
+        </div>
+        <div className="text-on-surface-variant z-10 font-medium animate-pulse">Initializing Agent Forge...</div>
       </div>
     );
   }
@@ -294,12 +338,31 @@ const App: React.FC = () => {
     <ToastProvider>
       <AnimatePresence mode="wait">
         {user ? (
-          <motion.div key="workspace" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-            <Workspace />
+          !hasWelcomed ? (
+            <motion.div key="welcome" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+              <WelcomeScreen userEmail={user.email || ''} onComplete={() => setHasWelcomed(true)} />
+            </motion.div>
+          ) : (
+            <motion.div key="workspace" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+              <Workspace />
+            </motion.div>
+          )
+        ) : view === 'landing' ? (
+          <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+            <LandingPage
+              onGetStarted={() => { setAuthIsSignUp(true); setView('auth'); }}
+              onSignIn={() => { setAuthIsSignUp(false); setView('auth'); }}
+            />
           </motion.div>
         ) : (
-          <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-            <AuthScreen />
+          <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.5 }}>
+            <AuthScreen initialIsSignUp={authIsSignUp} />
+            <button
+              onClick={() => setView('landing')}
+              className="absolute top-8 left-8 z-50 text-on-surface-variant hover:text-on-surface flex items-center gap-2 font-bold text-sm bg-glass px-4 py-2 rounded-xl border border-white/5"
+            >
+              ← Back to Landing
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

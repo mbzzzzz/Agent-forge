@@ -1,6 +1,6 @@
 import { BrandIdentity, ColorPalette, Typography, BrandCampaign, CarouselPost, CampaignInput } from "../types";
 import { InferenceClient } from "@huggingface/inference";
-import { generateText as generateGroqText } from "./groqService";
+import { generateText as generateGroqText, improveImagePrompt } from "./groqService";
 
 const getApiKey = (): string => {
   const hfToken = process.env.HF_TOKEN;
@@ -145,7 +145,7 @@ function getNegativePromptForUseCase(useCase: 'logo' | 'mockup' | 'poster' | 'so
   return `${baseNegative}, ${specificNegative}`;
 }
 
-// Helper function for image generation
+// Helper function for image generation - NOW USING FLUX AND GROQ IMPROVEMENT
 async function generateImage(
   prompt: string,
   options?: {
@@ -154,14 +154,23 @@ async function generateImage(
     num_inference_steps?: number;
     negative_prompt?: string;
     useCase?: 'logo' | 'mockup' | 'poster' | 'social' | 'carousel' | 'brand-asset' | 'general' | 'remix';
+    skipImprovement?: boolean;
   }
 ): Promise<string> {
   const client = getHfClient();
-  const model = 'stabilityai/stable-diffusion-xl-base-1.0';
+  const model = 'black-forest-labs/FLUX.1-dev';
 
-  // Enhanced prompt with use-case specific improvements
+  // Enhanced prompt with Groq real-time improvement
   const useCase = options?.useCase || 'general';
-  const enhancedPrompt = enhancePromptForUseCase(prompt, useCase);
+
+  // Real-time prompt improvement using Groq
+  let enhancedPrompt = prompt;
+  if (!options?.skipImprovement) {
+    console.log(`Improving ${useCase} prompt with Groq...`);
+    enhancedPrompt = await improveImagePrompt(prompt, useCase);
+    console.log('Improved prompt:', enhancedPrompt);
+  }
+
   const negativePrompt = options?.negative_prompt || getNegativePromptForUseCase(useCase);
 
   // Flux supports various aspect ratios, standard dimensions
@@ -238,13 +247,21 @@ export async function generateImageToImage(
   options?: {
     model?: string;
     useCase?: 'logo' | 'mockup' | 'poster' | 'social' | 'carousel' | 'brand-asset' | 'general' | 'remix';
+    skipImprovement?: boolean;
   }
 ): Promise<string> {
   const client = getHfClient();
-  const model = options?.model || "black-forest-labs/FLUX.2-dev"; // Using FLUX.2-dev as requested
+  const model = options?.model || "black-forest-labs/FLUX.1-dev";
 
   const useCase = options?.useCase || 'general';
-  const enhancedPrompt = enhancePromptForUseCase(prompt, useCase);
+
+  // Real-time prompt improvement using Groq
+  let enhancedPrompt = prompt;
+  if (!options?.skipImprovement) {
+    console.log(`Improving ${useCase} image-to-image prompt with Groq...`);
+    enhancedPrompt = await improveImagePrompt(prompt, useCase);
+    console.log('Improved prompt:', enhancedPrompt);
+  }
 
   console.log('Image-to-image generation request:', { model, promptLength: enhancedPrompt.length, useCase });
 
@@ -252,9 +269,10 @@ export async function generateImageToImage(
     const response = await client.imageToImage({
       provider: "auto",
       model: model,
-      inputs: image instanceof Blob ? await image.arrayBuffer() : image,
+      inputs: image instanceof Blob ? image : new Blob([image as any]),
       parameters: {
         prompt: enhancedPrompt,
+        strength: 0.7,
       },
     });
 
@@ -326,7 +344,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 - No markdown headers, bold, italic, or list formatting`;
 
   try {
-    const text = await generateText(prompt, 'mistralai/Mistral-7B-Instruct-v0.2', 1500);
+    const text = await generateText(prompt, 'llama3-70b-8192', 1500);
     console.log('Brand identity response received');
 
     // Try to extract JSON from the response (in case model wraps it in markdown)
@@ -351,33 +369,9 @@ CRITICAL OUTPUT REQUIREMENTS:
 
 export const generateLogo = async (brandName: string, industry: string, style: string): Promise<string> => {
   console.log('Generating logo for:', brandName, industry, style);
-  const prompt = `Create a world-class logo design for "${brandName}", a ${industry} company.
-
-DESIGN BRIEF:
-- Brand: ${brandName}
-- Industry: ${industry}
-- Style Direction: ${style}
-
-DESIGN REQUIREMENTS:
-- Professional, award-winning logo design suitable for a Creative Director's portfolio
-- Clean, minimalist vector-style design that scales perfectly from business card to billboard
-- Transparent background (no background colors or gradients)
-- No text elements unless it's an integral part of a wordmark design
-- Modern, timeless aesthetic that won't look dated in 5-10 years
-- Industry-appropriate symbolism that communicates brand values
-- Balanced composition with proper negative space
-- High contrast for visibility across all applications
-- Professional color palette or monochrome design
-- Suitable for both digital and print applications
-
-QUALITY STANDARDS:
-- Commercial-grade design quality
-- Professional branding standards
-- Portfolio-worthy execution
-- Industry-leading quality`;
-
   try {
-    const base64Image = await generateImage(prompt, {
+    // We pass the raw info to generateImage, which will use Groq to expand it into a professional logo prompt
+    const base64Image = await generateImage(`Logo for a ${brandName} company in the ${industry} industry. Style: ${style}`, {
       width: 1024,
       height: 1024,
       num_inference_steps: 30,
@@ -583,38 +577,7 @@ export const generateBrandAsset = async (logoImageBase64: string, assetType: 'Fa
 
 // Mockup Studio
 export const generateMockup = async (mockupType: string, designDescription: string): Promise<string> => {
-  const prompt = `Create a premium, award-winning product photography mockup that would be featured in a Creative Director's portfolio or high-end e-commerce catalog.
-
-PRODUCT DETAILS:
-- Product Type: ${mockupType}
-- Design/Content: "${designDescription}"
-
-PHOTOGRAPHY SPECIFICATIONS:
-- Style: Professional commercial product photography
-- Quality: Editorial-grade, magazine-worthy imagery
-- Lighting: Soft, natural daylight with professional studio lighting setup
-- Environment: Modern, minimalist workspace or lifestyle setting
-- Camera Angle: 45-degree perspective with dynamic composition
-- Background: Soft, blurred professional environment (office, studio, or lifestyle setting)
-- Depth of Field: Shallow depth of field with product in sharp focus
-- Color Grading: Professional, clean color correction
-- Shadows: Natural, realistic shadows that ground the product
-- Reflections: Subtle, realistic reflections if applicable
-
-COMPOSITION REQUIREMENTS:
-- Rule of thirds applied
-- Negative space for text overlay if needed
-- Product is the clear focal point
-- Professional framing and cropping
-- Balanced visual weight
-
-QUALITY STANDARDS:
-- Print-ready resolution quality
-- Commercial photography standards
-- Portfolio-worthy execution
-- Suitable for marketing materials, websites, and presentations`;
-
-  const base64Image = await generateImage(prompt, {
+  const base64Image = await generateImage(`Premium commercial product photography mockup of a ${mockupType} featuring: ${designDescription}`, {
     width: 1536,
     height: 864,
     num_inference_steps: 28,
@@ -626,40 +589,7 @@ QUALITY STANDARDS:
 
 // Poster Studio
 export const generatePoster = async (posterType: string, theme: string): Promise<string> => {
-  const prompt = `Create a stunning, award-winning poster design that would win recognition at design competitions and impress Creative Directors.
-
-POSTER BRIEF:
-- Type: ${posterType}
-- Theme: ${theme}
-
-DESIGN REQUIREMENTS:
-- Visual Style: Modern, contemporary design with professional typography and layout
-- Composition: Strong visual hierarchy following design principles (rule of thirds, golden ratio)
-- Typography: Dynamic, impactful typography that communicates the message clearly
-- Color Palette: Vibrant, engaging colors that support the theme and create visual impact
-- Mood: Energetic, exciting, and attention-grabbing
-- Layout: Professional poster layout optimized for 18x24 inch print format
-- Visual Elements: Striking imagery, graphics, or illustrations that support the theme
-- Readability: Clear, legible text at viewing distance
-- Balance: Well-balanced composition with proper use of negative space
-
-PROFESSIONAL STANDARDS:
-- Print-ready quality (300 DPI equivalent)
-- Professional design agency quality
-- Suitable for large format printing
-- Eye-catching from a distance
-- Memorable and impactful
-- Industry-leading design execution
-
-DESIGN PRINCIPLES:
-- Clear visual hierarchy
-- Effective use of contrast
-- Professional color theory application
-- Strong focal point
-- Balanced composition
-- Professional typography treatment`;
-
-  const base64Image = await generateImage(prompt, {
+  const base64Image = await generateImage(`Award-winning poster design. Type: ${posterType}, Theme: ${theme}`, {
     width: 1280,
     height: 1024,
     num_inference_steps: 28,
@@ -674,34 +604,10 @@ export const generateSocialPost = async (platform: string, theme: string, brandN
   // Extract brand name from theme if it contains brand info
   const brandNameToUse = brandName || (theme.includes(' - ') ? theme.split(' - ')[0] : null);
 
-  const imagePrompt = `Create a high-performing, engagement-optimized ${platform} social media post image that a Social Media Manager would approve for a major brand campaign.
-
-CONTENT THEME:
-"${theme}"
-${brandNameToUse ? `Brand: ${brandNameToUse}` : ''}
-
-VISUAL REQUIREMENTS:
-- Style: Professional lifestyle photography with authentic, relatable feel
-- Composition: Instagram-optimized composition following platform best practices
-- Color Palette: Vibrant, warm, and engaging colors that drive engagement
-- Mood: Positive, inspiring, and emotionally resonant
-- Quality: Professional social media content quality
-- Engagement: Visually compelling and scroll-stopping
-- Authenticity: Genuine, relatable imagery that connects with audiences
-- Platform Optimization: Optimized for ${platform} format and audience expectations
-
-PROFESSIONAL STANDARDS:
-- Social media content quality that performs well
-- Brand-appropriate visual style
-- High engagement potential
-- Professional photography or illustration quality
-- Suitable for paid social media advertising
-- Memorable and shareable`;
-
   const aspectRatio = platform === 'Instagram Stories' ? '9:16' : '1:1';
   const dimensions = aspectRatio === '9:16' ? { width: 864, height: 1536 } : { width: 1024, height: 1024 };
 
-  const imageBase64 = await generateImage(imagePrompt, {
+  const imageBase64 = await generateImage(`Social media post for ${platform}. Theme: ${theme}${brandNameToUse ? `. Brand: ${brandNameToUse}` : ''}`, {
     ...dimensions,
     num_inference_steps: 28,
     useCase: 'social',
@@ -711,61 +617,21 @@ PROFESSIONAL STANDARDS:
     ? `IMPORTANT: Always use the brand name "${brandNameToUse}" with correct spelling throughout. `
     : '';
 
-  const captionPrompt = `You are a Senior Social Media Copywriter with 10+ years of experience creating viral content for major brands. Your captions consistently achieve high engagement rates (5%+), drive conversions, and win industry awards.
+  const captionPrompt = `You are a Senior Social Media Copywriter content creator.
+  TASK: Write a professional, high-performing ${platform} caption.
+  
+  CONTENT THEME: "${theme}"
+  ${brandInstruction}
+  PLATFORM: ${platform}
+  
+  REQUIREMENTS:
+  - NO MARKDOWN (no stars, no bolding, no headers).
+  - NO LISTS OR BULLET POINTS. Use smooth, flowing sentences.
+  - NO AI-isms (Avoid "Unlock", "Discover", "In today's world", "Experience the...").
+  - Write like a real person talking to a friend or customer.
+  - Return ONLY the caption text.`;
 
-TASK: Write a professional, high-performing ${platform} caption that a Social Media Manager would approve immediately.
-
-CONTENT THEME:
-"${theme}"
-${brandInstruction}
-PLATFORM: ${platform}
-
-CAPTION REQUIREMENTS:
-1. **Hook (First Line)**: Create an irresistible opening that stops the scroll:
-   - Ask a question, make a bold statement, or create intrigue
-   - Must be attention-grabbing and relevant
-   - Maximum 125 characters for optimal mobile display
-
-2. **Value Proposition**: Provide genuine value to the audience:
-   - Share insights, tips, or relatable content
-   - Connect emotionally with the target audience
-   - Build trust and credibility
-
-3. **Storytelling**: Weave a compelling narrative:
-   - Use storytelling techniques to engage readers
-   - Create emotional connection
-   - Make it shareable and memorable
-
-4. **Call-to-Action (CTA)**: End with a clear, compelling CTA:
-   - Specific action you want readers to take
-   - Natural and not overly salesy
-   - Aligned with campaign objectives
-
-5. **Brand Integration**: ${brandNameToUse ? `Naturally incorporate "${brandNameToUse}" with correct spelling.` : 'Maintain brand voice and tone.'}
-
-TONE & STYLE:
-- Authentic and conversational
-- Platform-appropriate (${platform} style)
-- Engaging and relatable
-- Professional yet approachable
-- Optimized for mobile reading
-
-QUALITY STANDARDS:
-- Zero spelling or grammar errors
-- Professional copywriting quality
-- High engagement potential
-- Brand-appropriate messaging
-- Clear, concise, and impactful
-
-CRITICAL OUTPUT REQUIREMENTS:
-- Return ONLY the caption text, no additional formatting
-- No markdown (#, *, **, etc.), no code blocks, no explanations
-- Write naturally as a human social media copywriter would
-- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
-- Use direct, engaging language without self-referential AI terms
-- The caption should sound authentic and human-written`;
-
-  const caption = await generateText(captionPrompt, 'mistralai/Mistral-7B-Instruct-v0.2', 500);
+  const caption = await generateText(captionPrompt, 'llama3-70b-8192', 500);
 
   const hashtagPrompt = `You are a Social Media Strategist specializing in hashtag research and optimization. You've increased reach by 300%+ for major brands through strategic hashtag use.
 
@@ -997,14 +863,13 @@ Return ONLY a valid JSON object with these exact keys:
 CRITICAL OUTPUT REQUIREMENTS:
 - Return ONLY valid JSON, no markdown formatting (#, *, **, etc.)
 - No code blocks, no explanations, no AI-generated language
-- Write naturally as a human creative director would
-- Avoid phrases like "As an AI", "I'm designed to", "Here's", "Let me"
+- NO LISTS OR BULLET POINTS in mainCaption or slides. Use natural flowing sentences.
 - Use direct, engaging language without self-referential AI terms
 - All text fields should be plain text, no markdown formatting`;
 
   let contentData;
   try {
-    const text = await generateText(contentPrompt, 'mistralai/Mistral-7B-Instruct-v0.2', 2500);
+    const text = await generateText(contentPrompt, 'llama3-70b-8192', 2500);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const jsonText = jsonMatch ? jsonMatch[0] : text;
     contentData = JSON.parse(jsonText);

@@ -69,7 +69,6 @@ const ImageRemixStudio: React.FC = () => {
             console.log('Starting image remix:', { prompt });
             const resultBase64 = await generateImageToImage(sourceImage, prompt, {
                 useCase: 'remix',
-                model: "black-forest-labs/FLUX.2-dev"
             });
 
             if (!resultBase64) {

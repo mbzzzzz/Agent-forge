@@ -46,28 +46,28 @@ const CampaignCard: React.FC<{ campaign: BrandCampaign; onSelect: () => void }> 
     >
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:via-primary/10 group-hover:to-primary/5 transition-all duration-300 pointer-events-none"></div>
-        
+
         {/* Animated accent bar */}
-        <motion.div 
+        <motion.div
             className="h-1 w-12 bg-gradient-to-r from-primary to-secondary rounded-full mb-4 relative z-10"
             initial={{ width: 48 }}
             whileHover={{ width: '100%' }}
             transition={{ duration: 0.3 }}
         ></motion.div>
-        
+
         <div className="relative z-10">
             <h3 className="text-xl font-bold text-on-surface mb-2 font-display group-hover:text-primary transition-colors">{campaign.title}</h3>
-        <p className="text-on-surface-variant text-sm mb-4 line-clamp-3">{campaign.description}</p>
+            <p className="text-on-surface-variant text-sm mb-4 line-clamp-3">{campaign.description}</p>
             <div className="flex gap-2 flex-wrap">
                 <span className="text-xs px-3 py-1.5 bg-primary-container/80 backdrop-blur-sm text-on-primary-container rounded-md font-medium">
-                {campaign.targetAudience}
-            </span>
+                    {campaign.targetAudience}
+                </span>
                 <span className="text-xs px-3 py-1.5 bg-surface-variant/50 text-on-surface-variant rounded-md font-medium">
                     {campaign.objective}
                 </span>
             </div>
         </div>
-        
+
         {/* Hover indicator */}
         <motion.div
             initial={{ opacity: 0, x: -10 }}
@@ -105,7 +105,7 @@ const BrandCampaignStudio: React.FC = () => {
         targetAudience: AUDIENCE_OPTIONS[1],
         products: ''
     });
-    
+
     // Store brand name for use in downloads and prompts
     const [currentBrandName, setCurrentBrandName] = useState<string>('');
 
@@ -124,10 +124,10 @@ const BrandCampaignStudio: React.FC = () => {
     const [lightboxSrc, setLightboxSrc] = useState<string>('');
     const [lightboxType, setLightboxType] = useState<'image' | 'video'>('image');
     const [captionExpanded, setCaptionExpanded] = useState(false);
-    
+
     // Form validation
     const [errors, setErrors] = useState<{ brandName?: string; products?: string }>({});
-    
+
     const copyToClipboard = (text: string, type: string) => {
         navigator.clipboard.writeText(text);
         showToast(`${type} copied to clipboard!`, 'success');
@@ -137,19 +137,19 @@ const BrandCampaignStudio: React.FC = () => {
 
     const validateForm = () => {
         const newErrors: { brandName?: string; products?: string } = {};
-        
+
         if (!input.brandName.trim()) {
             newErrors.brandName = 'Brand name is required';
         } else if (input.brandName.trim().length < 2) {
             newErrors.brandName = 'Brand name must be at least 2 characters';
         }
-        
+
         if (!input.products.trim()) {
             newErrors.products = 'Products/Services description is required';
         } else if (input.products.trim().length < 10) {
             newErrors.products = 'Please provide at least 10 characters';
         }
-        
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -174,7 +174,7 @@ const BrandCampaignStudio: React.FC = () => {
             setIsLoading(false);
         }
     };
-    
+
     const openLightbox = (src: string, type: 'image' | 'video' = 'image') => {
         setLightboxSrc(src);
         setLightboxType(type);
@@ -188,6 +188,12 @@ const BrandCampaignStudio: React.FC = () => {
         setSocialPost(null);
         setVideoUrl(null);
         setCarouselPost(null);
+
+        // Auto-trigger generations
+        setTimeout(() => {
+            handleGenerateSocial();
+            handleGenerateCarousel();
+        }, 100);
     };
 
     const handleGenerateSocial = async () => {
@@ -207,7 +213,7 @@ const BrandCampaignStudio: React.FC = () => {
         if (!selectedCampaign) return;
         setGeneratingType('video');
         try {
-            const prompt = `Cinematic commercial for ${selectedCampaign.title}. ${selectedCampaign.description}. High quality, professional lighting.`;
+            const prompt = `Cinematic commercial for ${selectedCampaign.title}. ${selectedCampaign.description}. High quality, 8k graphics, hyper realistic, professional lighting.`;
             const url = await generateVideo(prompt, setStatus);
             setVideoUrl(url);
         } catch (e) {
@@ -240,9 +246,9 @@ const BrandCampaignStudio: React.FC = () => {
                 <p className="text-on-surface-variant">Tell us about your brand and what you're selling.</p>
             </div>
 
-            <ProgressIndicator 
-                currentStep={1} 
-                totalSteps={3} 
+            <ProgressIndicator
+                currentStep={1}
+                totalSteps={3}
                 labels={['Brand Info', 'Select Concept', 'Generate Content']}
             />
 
@@ -253,22 +259,21 @@ const BrandCampaignStudio: React.FC = () => {
                         {errors.brandName && <span className="text-red-400 text-xs">*</span>}
                     </label>
                     <div className="relative">
-                    <input
-                        type="text"
-                            className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none transition-all ${
-                                errors.brandName 
-                                    ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500' 
+                        <input
+                            type="text"
+                            className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none transition-all ${errors.brandName
+                                    ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500'
                                     : 'border-outline/30 focus:ring-primary focus:border-primary'
-                            }`}
-                        placeholder="e.g. Acme Co."
-                        value={input.brandName}
+                                }`}
+                            placeholder="e.g. Acme Co."
+                            value={input.brandName}
                             onChange={(e) => {
                                 setInput({ ...input, brandName: e.target.value });
                                 if (errors.brandName) {
                                     setErrors({ ...errors, brandName: undefined });
                                 }
                             }}
-                    />
+                        />
                         {input.brandName && !errors.brandName && (
                             <motion.div
                                 initial={{ scale: 0 }}
@@ -319,21 +324,20 @@ const BrandCampaignStudio: React.FC = () => {
                         {errors.products && <span className="text-red-400 text-xs">*</span>}
                     </label>
                     <div className="relative">
-                    <textarea
-                            className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none h-32 resize-none transition-all ${
-                                errors.products 
-                                    ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500' 
+                        <textarea
+                            className={`w-full bg-surface-variant/30 border rounded-xl px-4 py-3 text-white focus:ring-2 focus:outline-none h-32 resize-none transition-all ${errors.products
+                                    ? 'border-red-500/50 focus:ring-red-500 focus:border-red-500'
                                     : 'border-outline/30 focus:ring-primary focus:border-primary'
-                            }`}
-                        placeholder="Describe what you are selling..."
-                        value={input.products}
+                                }`}
+                            placeholder="Describe what you are selling..."
+                            value={input.products}
                             onChange={(e) => {
                                 setInput({ ...input, products: e.target.value });
                                 if (errors.products) {
                                     setErrors({ ...errors, products: undefined });
                                 }
                             }}
-                    />
+                        />
                         {input.products && !errors.products && input.products.length >= 10 && (
                             <motion.div
                                 initial={{ scale: 0 }}
@@ -383,9 +387,9 @@ const BrandCampaignStudio: React.FC = () => {
                 </div>
             </div>
 
-            <ProgressIndicator 
-                currentStep={2} 
-                totalSteps={3} 
+            <ProgressIndicator
+                currentStep={2}
+                totalSteps={3}
                 labels={['Brand Info', 'Select Concept', 'Generate Content']}
             />
 
@@ -396,15 +400,15 @@ const BrandCampaignStudio: React.FC = () => {
                     ))}
                 </div>
             ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {campaigns.map((campaign, idx) => (
-                    <CampaignCard
-                        key={idx}
-                        campaign={campaign}
-                        onSelect={() => handleSelectCampaign(campaign)}
-                    />
-                ))}
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {campaigns.map((campaign, idx) => (
+                        <CampaignCard
+                            key={idx}
+                            campaign={campaign}
+                            onSelect={() => handleSelectCampaign(campaign)}
+                        />
+                    ))}
+                </div>
             )}
         </div>
     );
@@ -427,9 +431,9 @@ const BrandCampaignStudio: React.FC = () => {
                     </div>
                 </div>
 
-                <ProgressIndicator 
-                    currentStep={3} 
-                    totalSteps={3} 
+                <ProgressIndicator
+                    currentStep={3}
+                    totalSteps={3}
                     labels={['Brand Info', 'Select Concept', 'Generate Content']}
                 />
 
@@ -461,9 +465,9 @@ const BrandCampaignStudio: React.FC = () => {
                         ) : socialPost ? (
                             <GeneratedContentSection title="Instagram Post" icon={ImageIcon}>
                                 <div className="relative group">
-                                    <img 
-                                        src={`data:image/png;base64,${socialPost.image}`} 
-                                        alt="Social" 
+                                    <img
+                                        src={`data:image/png;base64,${socialPost.image}`}
+                                        alt="Social"
                                         className="w-full rounded-lg mb-4 cursor-pointer hover:opacity-90 transition-opacity"
                                         onClick={() => openLightbox(`data:image/png;base64,${socialPost.image}`, 'image')}
                                     />
@@ -521,8 +525,8 @@ const BrandCampaignStudio: React.FC = () => {
                                         <div key={i} className="min-w-[200px] snap-center group">
                                             {slide.image ? (
                                                 <div className="relative">
-                                                    <img 
-                                                        src={`data:image/png;base64,${slide.image}`} 
+                                                    <img
+                                                        src={`data:image/png;base64,${slide.image}`}
                                                         className="w-full aspect-square object-cover rounded-lg mb-2 cursor-pointer hover:opacity-90 transition-opacity"
                                                         onClick={() => openLightbox(`data:image/png;base64,${slide.image}`, 'image')}
                                                     />
@@ -540,7 +544,7 @@ const BrandCampaignStudio: React.FC = () => {
                                         </div>
                                     ))}
                                 </div>
-                                
+
                                 {/* Caption Section */}
                                 <div className="bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 p-4 rounded-lg space-y-3">
                                     <div className="flex items-center justify-between">
@@ -568,7 +572,7 @@ const BrandCampaignStudio: React.FC = () => {
                                         </button>
                                     )}
                                 </div>
-                                
+
                                 {/* Hashtags Section */}
                                 <div className="bg-gradient-to-br from-secondary/10 to-primary/10 border border-secondary/20 p-4 rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
@@ -588,15 +592,15 @@ const BrandCampaignStudio: React.FC = () => {
                                         {carouselPost.hashtags}
                                     </p>
                                 </div>
-                                
+
                                 {/* Download Actions */}
                                 <div className="space-y-3 pt-2">
-                                    <CarouselDownload 
+                                    <CarouselDownload
                                         slides={carouselPost.slides}
                                         brandName={currentBrandName}
                                         campaignTitle={selectedCampaign?.title}
                                     />
-                                    
+
                                     <div className="flex justify-end gap-2 pt-2 border-t border-outline/20">
                                         <Button
                                             variant="secondary"
@@ -653,7 +657,7 @@ const BrandCampaignStudio: React.FC = () => {
                         ) : videoUrl ? (
                             <GeneratedContentSection title="Campaign Video" icon={Video}>
                                 <div className="relative group">
-                                <video src={videoUrl} controls className="w-full rounded-lg shadow-lg mb-4" />
+                                    <video src={videoUrl} controls className="w-full rounded-lg shadow-lg mb-4" />
                                     <button
                                         onClick={() => openLightbox(videoUrl, 'video')}
                                         className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 backdrop-blur-sm p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
@@ -665,9 +669,9 @@ const BrandCampaignStudio: React.FC = () => {
                                     <span className="text-xs text-on-surface-variant">
                                         {currentBrandName ? `${currentBrandName} - ` : ''}Campaign Video
                                     </span>
-                                    <DownloadAction 
-                                        dataUrl={videoUrl} 
-                                        filename={`${currentBrandName ? currentBrandName.replace(/\s+/g, '-') + '-' : ''}campaign-video.mp4`} 
+                                    <DownloadAction
+                                        dataUrl={videoUrl}
+                                        filename={`${currentBrandName ? currentBrandName.replace(/\s+/g, '-') + '-' : ''}campaign-video.mp4`}
                                     />
                                 </div>
                             </GeneratedContentSection>
@@ -688,21 +692,21 @@ const BrandCampaignStudio: React.FC = () => {
 
     return (
         <>
-        <div className="max-w-7xl mx-auto pb-20">
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={step}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    {step === 1 && renderStep1()}
-                    {step === 2 && renderStep2()}
-                    {step === 3 && renderStep3()}
-                </motion.div>
-            </AnimatePresence>
-        </div>
+            <div className="max-w-7xl mx-auto pb-20">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={step}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {step === 1 && renderStep1()}
+                        {step === 2 && renderStep2()}
+                        {step === 3 && renderStep3()}
+                    </motion.div>
+                </AnimatePresence>
+            </div>
             <Lightbox
                 isOpen={lightboxOpen}
                 onClose={() => setLightboxOpen(false)}
