@@ -4,7 +4,8 @@ import { generateText as generateAnthropicText, improveImagePrompt } from "./ant
 export { improveImagePrompt };
 
 const getApiKey = (): string => {
-  const hfToken = process.env.HF_TOKEN;
+  const env = (import.meta as any).env || {};
+  const hfToken = env.VITE_HF_TOKEN || env.HF_TOKEN || (typeof process !== 'undefined' ? process.env.HF_TOKEN : '');
   if (hfToken) return hfToken;
 
   throw new Error('Hugging Face API key (HF_TOKEN) not found. Please set the HF_TOKEN environment variable.');
@@ -101,7 +102,7 @@ function cleanGeneratedText(text: string): string {
 }
 
 // Helper function for text generation - NOW USING ANTHROPIC
-async function generateText(prompt: string, model: string = 'claude-3-5-haiku-20241022', maxTokens: number = 2000): Promise<string> {
+async function generateText(prompt: string, model: string = 'claude-3-haiku-20240307', maxTokens: number = 2000): Promise<string> {
   return generateAnthropicText(prompt, model, maxTokens);
 }
 
@@ -159,7 +160,7 @@ async function generateImage(
   }
 ): Promise<string> {
   const client = getHfClient();
-  const model = 'black-forest-labs/FLUX.1-dev';
+  const model = 'black-forest-labs/FLUX.1-schnell';
 
   // Enhanced prompt with Anthropic real-time improvement
   const useCase = options?.useCase || 'general';
@@ -252,7 +253,7 @@ export async function generateImageToImage(
   }
 ): Promise<string> {
   const client = getHfClient();
-  const model = options?.model || "black-forest-labs/FLUX.1-dev";
+  const model = options?.model || "black-forest-labs/FLUX.1-schnell";
 
   const useCase = options?.useCase || 'general';
 
@@ -345,7 +346,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 - No markdown headers, bold, italic, or list formatting`;
 
   try {
-    const text = await generateText(prompt, 'claude-3-5-haiku-20241022', 1500);
+    const text = await generateText(prompt, 'claude-3-haiku-20240307', 1500);
     console.log('Brand identity response received');
 
     // Try to extract JSON from the response (in case model wraps it in markdown)
@@ -632,7 +633,7 @@ export const generateSocialPost = async (platform: string, theme: string, brandN
   - Write like a real person talking to a friend or customer.
   - Return ONLY the caption text.`;
 
-  const caption = await generateText(captionPrompt, 'claude-3-5-haiku-20241022', 500);
+  const caption = await generateText(captionPrompt, 'claude-3-haiku-20240307', 500);
 
   const hashtagPrompt = `You are a Social Media Strategist specializing in hashtag research and optimization. You've increased reach by 300%+ for major brands through strategic hashtag use.
 
@@ -870,7 +871,7 @@ CRITICAL OUTPUT REQUIREMENTS:
 
   let contentData;
   try {
-    const text = await generateText(contentPrompt, 'llama3-70b-8192', 2500);
+    const text = await generateText(contentPrompt, 'claude-3-haiku-20240307', 2500);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const jsonText = jsonMatch ? jsonMatch[0] : text;
     contentData = JSON.parse(jsonText);

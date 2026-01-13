@@ -1,12 +1,5 @@
 
-const getAnthropicApiKey = (): string => {
-    // Use VITE_ prefix for client-side accessibility
-    const env = (import.meta as any).env || {};
-    const apiKey = env.VITE_ANTHROPIC_API_KEY || (typeof process !== 'undefined' ? process.env.ANTHROPIC_API_KEY : '');
-    if (apiKey) return apiKey;
 
-    throw new Error('Anthropic API key (VITE_ANTHROPIC_API_KEY) not found. Please set the environment variable.');
-};
 
 /**
  * Cleans AI-generated patterns and markdown from text
@@ -93,32 +86,24 @@ function cleanGeneratedText(text: string): string {
  */
 export async function generateText(
     prompt: string,
-    model: string = 'claude-3-5-haiku-20241022',
+    model: string = 'claude-3-haiku-20240307',
     maxTokens: number = 2000,
     systemPrompt: string = 'You are a world-class brand strategist and creative director.'
 ): Promise<string> {
-    const apiKey = getAnthropicApiKey();
-
+    // API key is handled by the server-side proxy
     console.log('Anthropic text generation request:', { model, promptLength: prompt.length });
 
     try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('/api/anthropic', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
             },
             body: JSON.stringify({
-                model: model,
+                prompt,
+                model,
                 max_tokens: maxTokens,
-                system: systemPrompt,
-                messages: [
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ]
+                system: systemPrompt
             })
         });
 
@@ -134,7 +119,8 @@ export async function generateText(
     } catch (error: any) {
         console.error('Anthropic text generation error:', error);
         if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
-            throw new Error('Network error: Unable to connect to Anthropic API. Please check your internet connection and try again.');
+            // Fallback for local dev without proxy mostly, but could be useful info
+            throw new Error('Network error: Unable to connect to backend API /api/anthropic. Ensure the server is running.');
         }
         throw error;
     }
@@ -175,7 +161,7 @@ export async function improveImagePrompt(
     IMPROVED PROMPT:`;
 
     try {
-        const improved = await generateText(prompt, 'claude-3-5-haiku-20241022', 1000, systemPrompt);
+        const improved = await generateText(prompt, 'claude-3-haiku-20240307', 1000, systemPrompt);
         return improved;
     } catch (error) {
         console.error('Failed to improve prompt with Claude, using base prompt:', error);
